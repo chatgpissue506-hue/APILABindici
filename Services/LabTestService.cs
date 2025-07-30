@@ -317,5 +317,148 @@ namespace LabTestApi.Services
 
             return filteredData;
         }
+
+        public async Task<IEnumerable<LabTestData>> GetPatientLabTestDataAsync(long patientId)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Getting lab test data for patient ID: {patientId}");
+                Console.WriteLine($"📋 Connection String: {_connectionString}");
+                
+                var labTestData = new List<LabTestData>();
+                
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    Console.WriteLine("⏳ Opening connection...");
+                    await connection.OpenAsync();
+                    Console.WriteLine("✅ Successfully connected to database!");
+                    
+                    // Test if stored procedure exists
+                    using (var testCommand = new SqlCommand("SELECT COUNT(*) FROM sys.procedures WHERE name = 'GetPatientLabTestData'", connection))
+                    {
+                        var procedureExists = (int)await testCommand.ExecuteScalarAsync();
+                        if (procedureExists > 0)
+                        {
+                            Console.WriteLine("✅ Stored procedure 'GetPatientLabTestData' found!");
+                        }
+                        else
+                        {
+                            Console.WriteLine("❌ Stored procedure 'GetPatientLabTestData' not found!");
+                            return new List<LabTestData>();
+                        }
+                    }
+                    
+                    Console.WriteLine("⏳ Executing GetPatientLabTestData stored procedure...");
+                    using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
+                    command.Parameters.AddWithValue("@pPatientID", patientId);
+                    using var reader = await command.ExecuteReaderAsync();
+                    
+                    Console.WriteLine("📋 Reading data from stored procedure...");
+                    Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                    
+                    // Print column information
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                    }
+                    
+                    while (await reader.ReadAsync())
+                    {
+                        try
+                        {
+                            // Read data safely by checking types
+                            var labTestDataItem = new LabTestData();
+                            
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                if (reader.IsDBNull(i)) continue;
+                                
+                                var columnName = reader.GetName(i);
+                                var value = reader[i];
+                                
+                                // Map columns based on name rather than position
+                                switch (columnName.ToLower())
+                                {
+                                    case "labtestobrid":
+                                        labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
+                                        break;
+                                    case "snomedcode":
+                                        labTestDataItem.SnomedCode = value.ToString();
+                                        break;
+                                    case "mesagesubject":
+                                        labTestDataItem.MesageSubject = value.ToString();
+                                        break;
+                                    case "observationdatetime":
+                                        labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
+                                        break;
+                                    case "statuschangedatetime":
+                                        labTestDataItem.StatusChangeDateTime = Convert.ToDateTime(value);
+                                        break;
+                                    case "appointmentid":
+                                        labTestDataItem.AppointmentID = value.ToString();
+                                        break;
+                                    case "labtestobxid":
+                                        labTestDataItem.LabTestOBXID = Convert.ToInt32(value);
+                                        break;
+                                    case "snomedcode_2":
+                                        labTestDataItem.SnomedCode_2 = value.ToString();
+                                        break;
+                                    case "resultname":
+                                        labTestDataItem.ResultName = value.ToString();
+                                        break;
+                                    case "observationcodingsystem":
+                                        labTestDataItem.ObservationCodingSystem = value.ToString();
+                                        break;
+                                    case "observationvalue":
+                                        labTestDataItem.ObservationValue = value.ToString();
+                                        break;
+                                    case "units":
+                                        labTestDataItem.Units = value.ToString();
+                                        break;
+                                    case "referenceranges":
+                                        labTestDataItem.ReferenceRanges = value.ToString();
+                                        break;
+                                    case "abnormalflagid":
+                                        labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
+                                        break;
+                                    case "labtestnteid":
+                                        labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
+                                        break;
+                                    case "source":
+                                        labTestDataItem.Source = value.ToString();
+                                        break;
+                                    case "comments":
+                                        labTestDataItem.Comments = value.ToString();
+                                        break;
+                                }
+                            }
+                            
+                            labTestData.Add(labTestDataItem);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"❌ Error reading row data: {ex.Message}");
+                            break;
+                        }
+                    }
+                }
+                
+                Console.WriteLine($"✅ Retrieved {labTestData.Count} records for patient {patientId}");
+                return labTestData;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Database connection failed: {ex.Message}");
+                Console.WriteLine($"📋 Connection string: {_connectionString}");
+                Console.WriteLine();
+                Console.WriteLine("🔧 Troubleshooting tips:");
+                Console.WriteLine("1. Check if 'dbserver-local' is accessible from this machine");
+                Console.WriteLine("2. Verify the username 'pms_nz' and password are correct");
+                Console.WriteLine("3. Ensure the database 'PMS_NZ_Local_NZTFS' exists");
+                Console.WriteLine("4. Check if SQL Server is running and accepting connections");
+                Console.WriteLine("5. Verify network connectivity to the server");
+                return new List<LabTestData>();
+            }
+        }
     }
 }

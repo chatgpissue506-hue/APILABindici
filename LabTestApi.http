@@ -1,49 +1,14 @@
-@LabTestApi_HostAddress = http://localhost:5050
-
 ### Get all lab test data
-GET {{LabTestApi_HostAddress}}/api/labtest
-Accept: application/json
+GET http://localhost:5050/api/labtest
 
-###
+### Get lab test data by patient ID (string)
+GET http://localhost:5050/api/labtest/patient/P001
 
-### Get lab test data by patient ID
-GET {{LabTestApi_HostAddress}}/api/labtest/patient/12345
-Accept: application/json
-
-###
+### Get lab test data by patient ID (bigint) - NEW ENDPOINT using GetPatientLabTestData SP
+GET http://localhost:5050/api/labtest/patient-sp/46359
 
 ### Get lab test data by date range
-GET {{LabTestApi_HostAddress}}/api/labtest/daterange?startDate=2024-01-01&endDate=2024-12-31
-Accept: application/json
+GET http://localhost:5050/api/labtest/daterange?startDate=2024-01-01&endDate=2024-12-31
 
-###
-
-### Get lab test data with flexible filters - all parameters
-GET {{LabTestApi_HostAddress}}/api/labtest/filter?patientId=12345&startDate=2024-01-01&endDate=2024-12-31&practiceId=PRACTICE001
-Accept: application/json
-
-###
-
-### Get lab test data with flexible filters - patient only
-GET {{LabTestApi_HostAddress}}/api/labtest/filter?patientId=12345
-Accept: application/json
-
-###
-
-### Get lab test data with flexible filters - date range only
-GET {{LabTestApi_HostAddress}}/api/labtest/filter?startDate=2024-01-01&endDate=2024-12-31
-Accept: application/json
-
-###
-
-### Get lab test data with flexible filters - practice only
-GET {{LabTestApi_HostAddress}}/api/labtest/filter?practiceId=PRACTICE001
-Accept: application/json
-
-###
-
-### Get Swagger documentation
-GET {{LabTestApi_HostAddress}}/swagger
-Accept: application/json
-
-###
+### Get lab test data with filters
+GET http://localhost:5050/api/labtest/filter?patientId=P001&startDate=2024-01-01&endDate=2024-12-31&practiceId=PRACTICE001

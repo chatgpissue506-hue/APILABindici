@@ -93,36 +93,47 @@ namespace LabTestApi.Controllers
         }
 
         /// <summary>
-        /// Get lab test data with flexible filtering options
+        /// Get lab test data with flexible filters
         /// </summary>
-        /// <param name="patientId">Optional patient ID filter</param>
-        /// <param name="startDate">Optional start date filter</param>
-        /// <param name="endDate">Optional end date filter</param>
-        /// <param name="practiceId">Optional practice ID filter</param>
+        /// <param name="patientId">Patient ID filter</param>
+        /// <param name="startDate">Start date filter</param>
+        /// <param name="endDate">End date filter</param>
+        /// <param name="practiceId">Practice ID filter</param>
         /// <returns>Filtered lab test data</returns>
         [HttpGet("filter")]
-        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(500)]
         public async Task<ActionResult<IEnumerable<LabTestData>>> GetLabTestDataWithFilters(
             [FromQuery] string? patientId = null,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null,
             [FromQuery] string? practiceId = null)
         {
-            if (startDate.HasValue && endDate.HasValue && startDate > endDate)
-            {
-                return BadRequest("Start date must be before or equal to end date");
-            }
-
             try
             {
-                var labTestData = await _labTestService.GetLabTestDataWithFiltersAsync(patientId, startDate, endDate, practiceId);
-                return Ok(labTestData);
+                var result = await _labTestService.GetLabTestDataWithFiltersAsync(patientId, startDate, endDate, practiceId);
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "An error occurred while retrieving lab test data", details = ex.Message });
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Get lab test data for a specific patient using GetPatientLabTestData stored procedure
+        /// </summary>
+        /// <param name="patientId">Patient ID (bigint)</param>
+        /// <returns>Lab test data for the specified patient</returns>
+        [HttpGet("patient-sp/{patientId:long}")]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetPatientLabTestData(long patientId)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientLabTestDataAsync(patientId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
     }

@@ -7,6 +7,11 @@ namespace LabTestApi.Services
         Task<IEnumerable<LabTestData>> GetLabTestDataAsync();
         Task<IEnumerable<LabTestData>> GetLabTestDataByPatientAsync(string patientId);
         Task<IEnumerable<LabTestData>> GetLabTestDataByDateRangeAsync(DateTime startDate, DateTime endDate);
-        Task<IEnumerable<LabTestData>> GetLabTestDataWithFiltersAsync(string? patientId = null, DateTime? startDate = null, DateTime? endDate = null, string? practiceId = null);
+        Task<IEnumerable<LabTestData>> GetLabTestDataWithFiltersAsync(
+            string? patientId = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            string? practiceId = null);
+        Task<IEnumerable<LabTestData>> GetPatientLabTestDataAsync(long patientId);
     }
 }
