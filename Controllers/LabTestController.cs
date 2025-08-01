@@ -136,5 +136,51 @@ namespace LabTestApi.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Get patient information using GetPatientnameforLAB stored procedure
+        /// </summary>
+        /// <param name="patientId">Patient ID (bigint)</param>
+        /// <returns>Patient information including ethnicity</returns>
+        [HttpGet("patient-info/{patientId:long}")]
+        public async Task<ActionResult<PatientInfo>> GetPatientInfo(long patientId)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientInfoByIDAsync(patientId);
+                if (result == null)
+                {
+                    return NotFound($"Patient with ID {patientId} not found");
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Get patient lab test data using updated GetPatientLabTestData stored procedure (returns structured data)
+        /// </summary>
+        /// <param name="patientId">Patient ID (bigint)</param>
+        /// <returns>Structured patient lab test data with header and details</returns>
+        [HttpGet("patient-labtest-updated/{patientId:long}")]
+        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestDataUpdated(long patientId)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId);
+                if (result == null)
+                {
+                    return NotFound($"Patient lab test data for patient ID {patientId} not found");
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

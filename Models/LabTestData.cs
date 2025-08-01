@@ -8,33 +8,34 @@ namespace LabTestApi.Models
         public string? SendingApplication { get; set; }
         public string? SendingFacility { get; set; }
         public string? ReceivingFacility { get; set; }
-        public DateTime? MessageDatetime { get; set; }
+        public DateTime MessageDatetime { get; set; }
         public string? NHINumber { get; set; }
         public string? FullName { get; set; }
-        public DateTime? DOB { get; set; }
+        public DateTime DOB { get; set; }
         public string? GenderName { get; set; }
         public string? PatientID { get; set; }
         public string? PracticeID { get; set; }
-        public DateTime? MshInsertedAt { get; set; }
-        public bool? MarkasRead { get; set; }
-        public DateTime? ifiinboxupdate { get; set; }
-        public DateTime? inboxrecevieddate { get; set; }
-        public int? LabTestOBRID { get; set; }
+        public DateTime MshInsertedAt { get; set; }
+        public bool MarkasRead { get; set; }
+        public DateTime ifiinboxupdate { get; set; }
+        public DateTime inboxrecevieddate { get; set; }
+        public int LabTestOBRID { get; set; }
         public string? SnomedCode { get; set; }
         public string? MesageSubject { get; set; }
-        public DateTime? ObservationDateTime { get; set; }
-        public DateTime? StatusChangeDateTime { get; set; }
+        public DateTime ObservationDateTime { get; set; }
+        public DateTime StatusChangeDateTime { get; set; }
         public string? AppointmentID { get; set; }
-        public int? LabTestOBXID { get; set; }
+        public long LabTestOBXID { get; set; }
         public string? SnomedCode_2 { get; set; }
         public string? ResultName { get; set; }
         public string? ObservationCodingSystem { get; set; }
         public string? ObservationValue { get; set; }
         public string? Units { get; set; }
         public string? ReferenceRanges { get; set; }
-        public int? AbnormalFlagID { get; set; }
-        public int? LabTestNTEID { get; set; }
+        public int AbnormalFlagID { get; set; }
+        public int LabTestNTEID { get; set; }
         public string? Source { get; set; }
         public string? Comments { get; set; }
+        public string? Ethnicity { get; set; }
     }
 }

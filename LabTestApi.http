@@ -1,14 +1,77 @@
+@LabTestApi_HostAddress = http://localhost:5050
+
+### Test Lab Test Data API
+
 ### Get all lab test data
-GET http://localhost:5050/api/labtest
+GET {{LabTestApi_HostAddress}}/api/labtest
+Accept: application/json
+
+###
 
 ### Get lab test data by patient ID (string)
-GET http://localhost:5050/api/labtest/patient/P001
+GET {{LabTestApi_HostAddress}}/api/labtest/patient/12345
+Accept: application/json
 
-### Get lab test data by patient ID (bigint) - NEW ENDPOINT using GetPatientLabTestData SP
-GET http://localhost:5050/api/labtest/patient-sp/46359
+###
+
+### Get lab test data by patient ID using GetPatientLabTestData SP (bigint)
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-sp/46359
+Accept: application/json
+
+###
 
 ### Get lab test data by date range
-GET http://localhost:5050/api/labtest/daterange?startDate=2024-01-01&endDate=2024-12-31
+GET {{LabTestApi_HostAddress}}/api/labtest/daterange?startDate=2024-01-01&endDate=2024-12-31
+Accept: application/json
+
+###
 
 ### Get lab test data with filters
-GET http://localhost:5050/api/labtest/filter?patientId=P001&startDate=2024-01-01&endDate=2024-12-31&practiceId=PRACTICE001
+GET {{LabTestApi_HostAddress}}/api/labtest/filter?patientId=12345&startDate=2024-01-01&endDate=2024-12-31&practiceId=1
+Accept: application/json
+
+###
+
+### Test External API Integration
+
+### Get external API information
+GET {{LabTestApi_HostAddress}}/api/externalapi/info
+Accept: application/json
+
+###
+
+### Search for ICD-10 diagnosis codes
+GET {{LabTestApi_HostAddress}}/api/externalapi/diagnosis/search?query=diabetes
+Accept: application/json
+
+###
+
+### Search for medications
+GET {{LabTestApi_HostAddress}}/api/externalapi/medication/search?search=aspirin
+Accept: application/json
+
+###
+
+### Test API Documentation
+
+### Get API documentation
+GET {{LabTestApi_HostAddress}}/api-docs
+Accept: application/json
+
+###
+
+### Test Swagger UI
+GET {{LabTestApi_HostAddress}}/swagger
+Accept: text/html
+
+### Get patient information using GetPatientnameforLAB SP
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-info/46359
+Accept: application/json
+
+###
+
+### Get patient lab test data using updated GetPatientLabTestData SP (structured response)
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-labtest-updated/46359
+Accept: application/json
+
+###

@@ -5,6 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add HttpClient for external API calls
+builder.Services.AddHttpClient<IExternalApiService, ExternalApiService>();
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -36,12 +39,13 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Lab Test API",
         Version = "v1",
-        Description = "API for retrieving lab test data from SQL Server stored procedure"
+        Description = "API for retrieving lab test data from SQL Server stored procedure and external medical APIs"
     });
 });
 
 // Add services
 builder.Services.AddScoped<ILabTestService, LabTestService>();
+builder.Services.AddScoped<IExternalApiService, ExternalApiService>();
 
 var app = builder.Build();
 
@@ -89,8 +93,13 @@ app.MapGet("/api-docs", () => new
         new { method = "GET", path = "/api/labtest", description = "Get all lab test data" },
         new { method = "GET", path = "/api/labtest/patient/{patientId}", description = "Get lab test data by patient ID (string)" },
         new { method = "GET", path = "/api/labtest/patient-sp/{patientId:long}", description = "Get lab test data by patient ID using GetPatientLabTestData SP (bigint)" },
+        new { method = "GET", path = "/api/labtest/patient-labtest-updated/{patientId:long}", description = "Get structured lab test data using updated GetPatientLabTestData SP (header + details)" },
+        new { method = "GET", path = "/api/labtest/patient-info/{patientId:long}", description = "Get patient information using GetPatientnameforLAB SP (includes ethnicity)" },
         new { method = "GET", path = "/api/labtest/daterange?startDate={date}&endDate={date}", description = "Get lab test data by date range" },
-        new { method = "GET", path = "/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}", description = "Get lab test data with flexible filters" }
+        new { method = "GET", path = "/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}", description = "Get lab test data with flexible filters" },
+        new { method = "GET", path = "/api/externalapi/diagnosis/search?query={term}", description = "Search ICD-10 diagnosis codes using NIH API" },
+        new { method = "GET", path = "/api/externalapi/medication/search?search={term}", description = "Search medications using RxNav API" },
+        new { method = "GET", path = "/api/externalapi/info", description = "Get information about external APIs" }
     },
     baseUrl = "http://localhost:5050",
     documentation = "Visit http://localhost:5050/swagger for Swagger UI or http://localhost:5050 for HTML documentation"

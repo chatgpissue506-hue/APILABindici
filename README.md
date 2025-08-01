@@ -11,25 +11,35 @@ A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQ
 - **Comprehensive Error Handling** - Detailed logging and error messages
 - **Flexible Filtering** - Multiple filtering options for data retrieval
 
-## 📋 API Endpoints
+## �� API Endpoints
 
-### Core Endpoints
+### Lab Test Data Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/labtest` | Get all lab test data |
-| `GET` | `/api/labtest/patient/{patientId}` | Get lab test data by patient ID (string) |
-| `GET` | `/api/labtest/patient-sp/{patientId:long}` | **NEW** - Get lab test data by patient ID using `GetPatientLabTestData` SP (bigint) |
-| `GET` | `/api/labtest/daterange?startDate={date}&endDate={date}` | Get lab test data by date range |
-| `GET` | `/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}` | Get lab test data with flexible filters |
+| GET | `/api/labtest` | Get all lab test data |
+| GET | `/api/labtest/patient/{patientId}` | Get lab test data by patient ID (string) |
+| GET | `/api/labtest/patient-sp/{patientId:long}` | Get lab test data by patient ID using GetPatientLabTestData SP (bigint) |
+| GET | `/api/labtest/patient-labtest-updated/{patientId:long}` | Get structured lab test data using updated GetPatientLabTestData SP (header + details) |
+| GET | `/api/labtest/patient-info/{patientId:long}` | Get patient information using GetPatientnameforLAB SP (includes ethnicity) |
+| GET | `/api/labtest/daterange?startDate={date}&endDate={date}` | Get lab test data by date range |
+| GET | `/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}` | Get lab test data with flexible filters |
+
+### External API Integration Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/externalapi/diagnosis/search?query={term}` | Search ICD-10 diagnosis codes using NIH Clinical Tables API |
+| GET | `/api/externalapi/medication/search?search={term}` | Search medications using RxNav API |
+| GET | `/api/externalapi/info` | Get information about available external APIs |
 
 ### Documentation Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/swagger` | Swagger UI documentation |
-| `GET` | `/api-docs` | API documentation in JSON format |
-| `GET` | `/` | Interactive HTML documentation |
+| GET | `/api-docs` | API documentation in JSON format |
+| GET | `/swagger` | Swagger UI for interactive API testing |
+| GET | `/` | HTML documentation page |
 
 ## 🗄️ Database Integration
 
@@ -260,3 +270,37 @@ This project is part of the APILABindici repository.
 ---
 
 **Repository**: [https://github.com/chatgpissue506-hue/APILABindici](https://github.com/chatgpissue506-hue/APILABindici)
+
+## 🔗 External API Sources
+
+### ICD-10 Diagnosis Search
+- **Source**: [NIH Clinical Tables API](https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search)
+- **Endpoint**: `GET /api/externalapi/diagnosis/search?query={term}`
+- **Description**: Search for ICD-10 diagnosis codes and names
+- **Example**: `GET /api/externalapi/diagnosis/search?query=diabetes`
+
+### Medication Search
+- **Source**: [RxNav API](https://rxnav.nlm.nih.gov/REST/drugs.json)
+- **Endpoint**: `GET /api/externalapi/medication/search?search={term}`
+- **Description**: Search for medications and drug information
+- **Example**: `GET /api/externalapi/medication/search?search=aspirin`
+
+## 📋 Example Usage
+
+### Search for Diabetes Diagnosis
+```bash
+curl -X GET "http://localhost:5050/api/externalapi/diagnosis/search?query=diabetes" \
+  -H "Accept: application/json"
+```
+
+### Search for Aspirin Medication
+```bash
+curl -X GET "http://localhost:5050/api/externalapi/medication/search?search=aspirin" \
+  -H "Accept: application/json"
+```
+
+### Get External API Information
+```bash
+curl -X GET "http://localhost:5050/api/externalapi/info" \
+  -H "Accept: application/json"
+```
