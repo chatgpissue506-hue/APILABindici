@@ -869,11 +869,6 @@ namespace LabTestApi.Services
                         {
                             var header = new PatientLabTestHeader
                             {
-                                LabTestMshID = reader.IsDBNull(reader.GetOrdinal("LabTestMshID")) ? 0 : reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
-                                SendingApplication = reader.IsDBNull(reader.GetOrdinal("SendingApplication")) ? null : reader.GetString(reader.GetOrdinal("SendingApplication")),
-                                SendingFacility = reader.IsDBNull(reader.GetOrdinal("SendingFacility")) ? null : reader.GetString(reader.GetOrdinal("SendingFacility")),
-                                ReceivingFacility = reader.IsDBNull(reader.GetOrdinal("ReceivingFacility")) ? null : reader.GetString(reader.GetOrdinal("ReceivingFacility")),
-                                MessageDatetime = reader.IsDBNull(reader.GetOrdinal("MessageDatetime")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
                                 NHINumber = reader.IsDBNull(reader.GetOrdinal("NHINumber")) ? null : reader.GetString(reader.GetOrdinal("NHINumber")),
                                 FullName = reader.IsDBNull(reader.GetOrdinal("FullName")) ? null : reader.GetString(reader.GetOrdinal("FullName")),
                                 DOB = reader.IsDBNull(reader.GetOrdinal("DOB")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("DOB")),
@@ -881,9 +876,8 @@ namespace LabTestApi.Services
                                 PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? null : reader.GetString(reader.GetOrdinal("PatientID")),
                                 PracticeID = reader.IsDBNull(reader.GetOrdinal("PracticeID")) ? null : reader.GetString(reader.GetOrdinal("PracticeID")),
                                 MshInsertedAt = reader.IsDBNull(reader.GetOrdinal("MshInsertedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
-                                MarkasRead = reader.IsDBNull(reader.GetOrdinal("MarkasRead")) ? false : reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
-                                InboxUpdatedAt = reader.IsDBNull(reader.GetOrdinal("InboxUpdatedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("InboxUpdatedAt")),
-                                InboxReceivedDate = reader.IsDBNull(reader.GetOrdinal("InboxReceivedDate")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate"))
+                                Ethnicity = reader.IsDBNull(reader.GetOrdinal("Ethnicity")) ? null : reader.GetString(reader.GetOrdinal("Ethnicity")),
+                                Age = reader.IsDBNull(reader.GetOrdinal("Age")) ? null : int.TryParse(reader.GetString(reader.GetOrdinal("Age")), out int age) ? age : null
                             };
                             
                             response.Header = header;
