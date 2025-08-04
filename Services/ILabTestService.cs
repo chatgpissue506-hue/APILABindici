@@ -11,5 +11,7 @@ namespace LabTestApi.Services
         Task<IEnumerable<LabTestData>> GetPatientLabTestDataAsync(long patientId);
         Task<PatientInfo?> GetPatientInfoByIDAsync(long patientId);
         Task<PatientLabTestResponse?> GetPatientLabTestDataUpdatedAsync(long patientId);
+        Task<List<PatientAllergy>> GetPatientAllergiesAsync(long patientId);
+        Task<List<PatientDiagnosis>> GetPatientDiagnosesAsync(long patientId);
     }
 }

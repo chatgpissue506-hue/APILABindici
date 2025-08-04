@@ -12,6 +12,74 @@ namespace LabTestApi.Services
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
+        // Helper method to safely get nullable int from reader
+        private int? GetNullableInt32(SqlDataReader reader, string columnName)
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            if (reader.IsDBNull(ordinal)) return null;
+            
+            // Check the actual data type and handle accordingly
+            var dataType = reader.GetDataTypeName(ordinal).ToLower();
+            switch (dataType)
+            {
+                case "tinyint":
+                    return (int)reader.GetByte(ordinal);
+                case "smallint":
+                    return (int)reader.GetInt16(ordinal);
+                case "int":
+                    return reader.GetInt32(ordinal);
+                case "bigint":
+                    return (int)reader.GetInt64(ordinal);
+                default:
+                    // Try to get as string and parse
+                    var stringValue = reader.GetString(ordinal);
+                    if (int.TryParse(stringValue, out int result))
+                        return result;
+                    throw new InvalidCastException($"Cannot convert column '{columnName}' of type '{dataType}' to int");
+            }
+        }
+
+        // Helper method to safely get nullable DateTime from reader
+        private DateTime? GetNullableDateTime(SqlDataReader reader, string columnName)
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+        }
+
+        // Helper method to safely get nullable string from reader
+        private string? GetNullableString(SqlDataReader reader, string columnName)
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+        }
+
+        // Helper method to safely get nullable byte from reader
+        private byte? GetNullableByte(SqlDataReader reader, string columnName)
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            if (reader.IsDBNull(ordinal)) return null;
+            
+            // Check the actual data type and handle accordingly
+            var dataType = reader.GetDataTypeName(ordinal).ToLower();
+            switch (dataType)
+            {
+                case "tinyint":
+                    return reader.GetByte(ordinal);
+                case "smallint":
+                    return (byte)reader.GetInt16(ordinal);
+                case "int":
+                    return (byte)reader.GetInt32(ordinal);
+                case "bigint":
+                    return (byte)reader.GetInt64(ordinal);
+                default:
+                    // Try to get as string and parse
+                    var stringValue = reader.GetString(ordinal);
+                    if (byte.TryParse(stringValue, out byte result))
+                        return result;
+                    throw new InvalidCastException($"Cannot convert column '{columnName}' of type '{dataType}' to byte");
+            }
+        }
+
         public async Task<IEnumerable<LabTestData>> GetLabTestDataAsync()
         {
             // Try to connect to database first
@@ -47,20 +115,8 @@ namespace LabTestApi.Services
                         Console.WriteLine($"📊 SQL Server Version: {version}");
                     }
                     
-                    // Test if stored procedure exists
-                    using (var testCommand = new SqlCommand("SELECT COUNT(*) FROM sys.procedures WHERE name = 'GetLabTestDataWithJoins'", connection))
-                    {
-                        var procedureExists = (int)await testCommand.ExecuteScalarAsync();
-                        if (procedureExists > 0)
-                        {
-                            Console.WriteLine("✅ Stored procedure 'GetLabTestDataWithJoins' found!");
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Stored procedure 'GetLabTestDataWithJoins' not found!");
-                            return new List<LabTestData>();
-                        }
-                    }
+                    // Try to execute the stored procedure directly
+                    Console.WriteLine("⏳ Attempting to execute GetLabTestDataWithJoins stored procedure...");
                     
                     Console.WriteLine("⏳ Executing stored procedure...");
                     using var command = new SqlCommand("EXEC [dbo].[GetLabTestDataWithJoins]", connection);
@@ -212,7 +268,7 @@ namespace LabTestApi.Services
                 Console.WriteLine("🔧 Troubleshooting tips:");
                 Console.WriteLine("1. Check if 'dbserver-local' is accessible from this machine");
                 Console.WriteLine("2. Verify the username 'pms_nz' and password are correct");
-                Console.WriteLine("3. Ensure the database 'PMS_NZ_Local_NZTFS' exists");
+                Console.WriteLine("3. Ensure the database 'PMS_NZ_V2' exists");
                 Console.WriteLine("4. Check if SQL Server is running and accepting connections");
                 Console.WriteLine("5. Verify network connectivity to the server");
                 return new List<LabTestData>();
@@ -542,20 +598,8 @@ namespace LabTestApi.Services
                     // First, get patient information
                     var patientInfo = await GetPatientInfoAsync(connection, patientId);
                     
-                    // Test if stored procedure exists
-                    using (var testCommand = new SqlCommand("SELECT COUNT(*) FROM sys.procedures WHERE name = 'GetPatientLabTestData'", connection))
-                    {
-                        var procedureExists = (int)await testCommand.ExecuteScalarAsync();
-                        if (procedureExists > 0)
-                        {
-                            Console.WriteLine("✅ Stored procedure 'GetPatientLabTestData' found!");
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Stored procedure 'GetPatientLabTestData' not found!");
-                            return new List<LabTestData>();
-                        }
-                    }
+                    // Try to execute the stored procedure directly
+                    Console.WriteLine("⏳ Attempting to execute GetPatientLabTestData stored procedure...");
                     
                     Console.WriteLine("⏳ Executing GetPatientLabTestData stored procedure...");
                     using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
@@ -675,7 +719,7 @@ namespace LabTestApi.Services
                 Console.WriteLine("🔧 Troubleshooting tips:");
                 Console.WriteLine("1. Check if 'dbserver-local' is accessible from this machine");
                 Console.WriteLine("2. Verify the username 'pms_nz' and password are correct");
-                Console.WriteLine("3. Ensure the database 'PMS_NZ_Local_NZTFS' exists");
+                Console.WriteLine("3. Ensure the database 'PMS_NZ_V2' exists");
                 Console.WriteLine("4. Check if SQL Server is running and accepting connections");
                 Console.WriteLine("5. Verify network connectivity to the server");
                 return new List<LabTestData>();
@@ -718,8 +762,8 @@ namespace LabTestApi.Services
                         FullName = reader.IsDBNull(reader.GetOrdinal("FullName")) ? null : reader.GetString(reader.GetOrdinal("FullName")),
                         DOB = reader.IsDBNull(reader.GetOrdinal("DOB")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("DOB")),
                         GenderName = reader.IsDBNull(reader.GetOrdinal("GenderName")) ? null : reader.GetString(reader.GetOrdinal("GenderName")),
-                        PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? null : reader.GetString(reader.GetOrdinal("PatientID")),
-                        PracticeID = reader.IsDBNull(reader.GetOrdinal("PracticeID")) ? null : reader.GetString(reader.GetOrdinal("PracticeID")),
+                        PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? null : reader.GetInt32(reader.GetOrdinal("PatientID")).ToString(),
+                        PracticeID = reader.IsDBNull(reader.GetOrdinal("PracticeID")) ? null : reader.GetInt32(reader.GetOrdinal("PracticeID")).ToString(),
                         Ethnicity = null // Set to null since the column doesn't exist in the database
                     };
                     
@@ -750,20 +794,8 @@ namespace LabTestApi.Services
                     await connection.OpenAsync();
                     Console.WriteLine("✅ Successfully connected to database!");
                     
-                    // Test if stored procedure exists
-                    using (var testCommand = new SqlCommand("SELECT COUNT(*) FROM sys.procedures WHERE name = 'GetPatientnameforLAB'", connection))
-                    {
-                        var procedureExists = (int)await testCommand.ExecuteScalarAsync();
-                        if (procedureExists > 0)
-                        {
-                            Console.WriteLine("✅ Stored procedure 'GetPatientnameforLAB' found!");
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Stored procedure 'GetPatientnameforLAB' not found!");
-                            return null;
-                        }
-                    }
+                    // Try to execute the stored procedure directly without checking if it exists
+                    Console.WriteLine("⏳ Attempting to execute GetPatientnameforLAB stored procedure...");
                     
                     Console.WriteLine("⏳ Executing GetPatientnameforLAB stored procedure...");
                     using var command = new SqlCommand("EXEC [dbo].[GetPatientnameforLAB] @pPatientID", connection);
@@ -831,20 +863,8 @@ namespace LabTestApi.Services
                     await connection.OpenAsync();
                     Console.WriteLine("✅ Successfully connected to database!");
                     
-                    // Test if stored procedure exists
-                    using (var testCommand = new SqlCommand("SELECT COUNT(*) FROM sys.procedures WHERE name = 'GetPatientLabTestData'", connection))
-                    {
-                        var procedureExists = (int)await testCommand.ExecuteScalarAsync();
-                        if (procedureExists > 0)
-                        {
-                            Console.WriteLine("✅ Stored procedure 'GetPatientLabTestData' found!");
-                        }
-                        else
-                        {
-                            Console.WriteLine("❌ Stored procedure 'GetPatientLabTestData' not found!");
-                            return null;
-                        }
-                    }
+                    // Try to execute the stored procedure directly
+                    Console.WriteLine("⏳ Attempting to execute GetPatientLabTestData stored procedure...");
                     
                     Console.WriteLine("⏳ Executing GetPatientLabTestData stored procedure...");
                     using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
@@ -867,17 +887,71 @@ namespace LabTestApi.Services
                     {
                         try
                         {
+                            Console.WriteLine("🔍 Reading header fields with detailed logging:");
+                            
+                            // NHINumber
+                            var nhiNumberOrdinal = reader.GetOrdinal("NHINumber");
+                            var nhiNumberValue = reader.IsDBNull(nhiNumberOrdinal) ? null : reader.GetString(nhiNumberOrdinal);
+                            Console.WriteLine($"  NHINumber: {nhiNumberValue} (Type: {reader.GetDataTypeName(nhiNumberOrdinal)})");
+                            
+                            // FullName
+                            var fullNameOrdinal = reader.GetOrdinal("FullName");
+                            var fullNameValue = reader.IsDBNull(fullNameOrdinal) ? null : reader.GetString(fullNameOrdinal);
+                            Console.WriteLine($"  FullName: {fullNameValue} (Type: {reader.GetDataTypeName(fullNameOrdinal)})");
+                            
+                            // DOB
+                            var dobOrdinal = reader.GetOrdinal("DOB");
+                            var dobValue = reader.IsDBNull(dobOrdinal) ? DateTime.MinValue : reader.GetDateTime(dobOrdinal);
+                            Console.WriteLine($"  DOB: {dobValue} (Type: {reader.GetDataTypeName(dobOrdinal)})");
+                            
+                            // GenderName
+                            var genderNameOrdinal = reader.GetOrdinal("GenderName");
+                            var genderNameValue = reader.IsDBNull(genderNameOrdinal) ? null : reader.GetString(genderNameOrdinal);
+                            Console.WriteLine($"  GenderName: {genderNameValue} (Type: {reader.GetDataTypeName(genderNameOrdinal)})");
+                            
+                                                            // PatientID
+                                var patientIdOrdinal = reader.GetOrdinal("PatientID");
+                                var patientIdValue = GetNullableInt32(reader, "PatientID")?.ToString();
+                                Console.WriteLine($"  PatientID: {patientIdValue} (Type: {reader.GetDataTypeName(patientIdOrdinal)})");
+                                
+                                // PracticeID
+                                var practiceIdOrdinal = reader.GetOrdinal("PracticeID");
+                                var practiceIdValue = GetNullableInt32(reader, "PracticeID")?.ToString();
+                                Console.WriteLine($"  PracticeID: {practiceIdValue} (Type: {reader.GetDataTypeName(practiceIdOrdinal)})");
+                            
+                            // MshInsertedAt
+                            var mshInsertedAtOrdinal = reader.GetOrdinal("MshInsertedAt");
+                            var mshInsertedAtValue = reader.IsDBNull(mshInsertedAtOrdinal) ? DateTime.MinValue : reader.GetDateTime(mshInsertedAtOrdinal);
+                            Console.WriteLine($"  MshInsertedAt: {mshInsertedAtValue} (Type: {reader.GetDataTypeName(mshInsertedAtOrdinal)})");
+                            
+                            // Ethnicity
+                            var ethnicityOrdinal = reader.GetOrdinal("Ethnicity");
+                            var ethnicityValue = reader.IsDBNull(ethnicityOrdinal) ? null : reader.GetString(ethnicityOrdinal);
+                            Console.WriteLine($"  Ethnicity: {ethnicityValue} (Type: {reader.GetDataTypeName(ethnicityOrdinal)})");
+                            
+                                                            // Age
+                                var ageOrdinal = reader.GetOrdinal("Age");
+                                int? ageValue = null;
+                                if (!reader.IsDBNull(ageOrdinal))
+                                {
+                                    if (int.TryParse(reader.GetString(ageOrdinal), out int age))
+                                    {
+                                        ageValue = age;
+                                    }
+                                }
+                                Console.WriteLine($"  Age: {ageValue} (Type: {reader.GetDataTypeName(ageOrdinal)})");
+                            
                             var header = new PatientLabTestHeader
                             {
-                                NHINumber = reader.IsDBNull(reader.GetOrdinal("NHINumber")) ? null : reader.GetString(reader.GetOrdinal("NHINumber")),
-                                FullName = reader.IsDBNull(reader.GetOrdinal("FullName")) ? null : reader.GetString(reader.GetOrdinal("FullName")),
-                                DOB = reader.IsDBNull(reader.GetOrdinal("DOB")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("DOB")),
-                                GenderName = reader.IsDBNull(reader.GetOrdinal("GenderName")) ? null : reader.GetString(reader.GetOrdinal("GenderName")),
-                                PatientID = reader.IsDBNull(reader.GetOrdinal("PatientID")) ? null : reader.GetString(reader.GetOrdinal("PatientID")),
-                                PracticeID = reader.IsDBNull(reader.GetOrdinal("PracticeID")) ? null : reader.GetString(reader.GetOrdinal("PracticeID")),
-                                MshInsertedAt = reader.IsDBNull(reader.GetOrdinal("MshInsertedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
-                                Ethnicity = reader.IsDBNull(reader.GetOrdinal("Ethnicity")) ? null : reader.GetString(reader.GetOrdinal("Ethnicity")),
-                                Age = reader.IsDBNull(reader.GetOrdinal("Age")) ? null : int.TryParse(reader.GetString(reader.GetOrdinal("Age")), out int age) ? age : null
+                                NHINumber = nhiNumberValue,
+                                FullName = fullNameValue,
+                                DOB = dobValue,
+                                GenderName = genderNameValue,
+                                PatientID = patientIdValue,
+                                PracticeID = practiceIdValue,
+                                MshInsertedAt = mshInsertedAtValue,
+                                Ethnicity = ethnicityValue,
+                                Age = ageValue
                             };
                             
                             response.Header = header;
@@ -886,13 +960,14 @@ namespace LabTestApi.Services
                         catch (Exception ex)
                         {
                             Console.WriteLine($"❌ Error reading header data: {ex.Message}");
+                            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
                         }
                     }
                     
                     // Move to next result set (second dataset)
                     if (await reader.NextResultAsync())
                     {
-                        Console.WriteLine("📋 Reading second dataset (Detail information)...");
+                        Console.WriteLine("📋 Reading second dataset (Lab Test Detail information)...");
                         Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
                         
                         // Print column information for second dataset
@@ -905,37 +980,468 @@ namespace LabTestApi.Services
                         {
                             try
                             {
+                                Console.WriteLine("🔍 Reading lab test detail fields with detailed logging:");
+                                
+                                // LabTestOBRID
+                                var labTestOBRIDOrdinal = reader.GetOrdinal("LabTestOBRID");
+                                var labTestOBRIDValue = reader.IsDBNull(labTestOBRIDOrdinal) ? 0 : reader.GetInt32(labTestOBRIDOrdinal);
+                                Console.WriteLine($"  LabTestOBRID: {labTestOBRIDValue} (Type: {reader.GetDataTypeName(labTestOBRIDOrdinal)})");
+                                
+                                // SnomedCode
+                                var snomedCodeOrdinal = reader.GetOrdinal("SnomedCode");
+                                var snomedCodeValue = reader.IsDBNull(snomedCodeOrdinal) ? null : reader.GetString(snomedCodeOrdinal);
+                                Console.WriteLine($"  SnomedCode: {snomedCodeValue} (Type: {reader.GetDataTypeName(snomedCodeOrdinal)})");
+                                
+                                // MessageSubject
+                                var messageSubjectOrdinal = reader.GetOrdinal("MessageSubject");
+                                var messageSubjectValue = reader.IsDBNull(messageSubjectOrdinal) ? null : reader.GetString(messageSubjectOrdinal);
+                                Console.WriteLine($"  MessageSubject: {messageSubjectValue} (Type: {reader.GetDataTypeName(messageSubjectOrdinal)})");
+                                
+                                // ObservationDateTime
+                                var observationDateTimeOrdinal = reader.GetOrdinal("ObservationDateTime");
+                                var observationDateTimeValue = reader.IsDBNull(observationDateTimeOrdinal) ? DateTime.MinValue : reader.GetDateTime(observationDateTimeOrdinal);
+                                Console.WriteLine($"  ObservationDateTime: {observationDateTimeValue} (Type: {reader.GetDataTypeName(observationDateTimeOrdinal)})");
+                                
+                                // StatusChangeDateTime
+                                var statusChangeDateTimeOrdinal = reader.GetOrdinal("StatusChangeDateTime");
+                                var statusChangeDateTimeValue = reader.IsDBNull(statusChangeDateTimeOrdinal) ? DateTime.MinValue : reader.GetDateTime(statusChangeDateTimeOrdinal);
+                                Console.WriteLine($"  StatusChangeDateTime: {statusChangeDateTimeValue} (Type: {reader.GetDataTypeName(statusChangeDateTimeOrdinal)})");
+                                
+                                // AppointmentID
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID")?.ToString();
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                
+                                // LabTestOBXID
+                                var labTestOBXIDOrdinal = reader.GetOrdinal("LabTestOBXID");
+                                var labTestOBXIDValue = reader.IsDBNull(labTestOBXIDOrdinal) ? 0 : reader.GetInt64(labTestOBXIDOrdinal);
+                                Console.WriteLine($"  LabTestOBXID: {labTestOBXIDValue} (Type: {reader.GetDataTypeName(labTestOBXIDOrdinal)})");
+                                
+                                // SnomedCode_2
+                                var snomedCode2Ordinal = reader.GetOrdinal("SnomedCode_2");
+                                var snomedCode2Value = reader.IsDBNull(snomedCode2Ordinal) ? null : reader.GetString(snomedCode2Ordinal);
+                                Console.WriteLine($"  SnomedCode_2: {snomedCode2Value} (Type: {reader.GetDataTypeName(snomedCode2Ordinal)})");
+                                
+                                // ResultName
+                                var resultNameOrdinal = reader.GetOrdinal("ResultName");
+                                var resultNameValue = reader.IsDBNull(resultNameOrdinal) ? null : reader.GetString(resultNameOrdinal);
+                                Console.WriteLine($"  ResultName: {resultNameValue} (Type: {reader.GetDataTypeName(resultNameOrdinal)})");
+                                
+                                // ObservationCodingSystem
+                                var observationCodingSystemOrdinal = reader.GetOrdinal("ObservationCodingSystem");
+                                var observationCodingSystemValue = reader.IsDBNull(observationCodingSystemOrdinal) ? null : reader.GetString(observationCodingSystemOrdinal);
+                                Console.WriteLine($"  ObservationCodingSystem: {observationCodingSystemValue} (Type: {reader.GetDataTypeName(observationCodingSystemOrdinal)})");
+                                
+                                // ObservationValue
+                                var observationValueOrdinal = reader.GetOrdinal("ObservationValue");
+                                var observationValueValue = reader.IsDBNull(observationValueOrdinal) ? null : reader.GetString(observationValueOrdinal);
+                                Console.WriteLine($"  ObservationValue: {observationValueValue} (Type: {reader.GetDataTypeName(observationValueOrdinal)})");
+                                
+                                // Units
+                                var unitsOrdinal = reader.GetOrdinal("Units");
+                                var unitsValue = reader.IsDBNull(unitsOrdinal) ? null : reader.GetString(unitsOrdinal);
+                                Console.WriteLine($"  Units: {unitsValue} (Type: {reader.GetDataTypeName(unitsOrdinal)})");
+                                
+                                // ReferenceRanges
+                                var referenceRangesOrdinal = reader.GetOrdinal("ReferenceRanges");
+                                var referenceRangesValue = reader.IsDBNull(referenceRangesOrdinal) ? null : reader.GetString(referenceRangesOrdinal);
+                                Console.WriteLine($"  ReferenceRanges: {referenceRangesValue} (Type: {reader.GetDataTypeName(referenceRangesOrdinal)})");
+                                
+                                // AbnormalFlagID
+                                var abnormalFlagIDOrdinal = reader.GetOrdinal("AbnormalFlagID");
+                                var abnormalFlagIDValue = reader.IsDBNull(abnormalFlagIDOrdinal) ? 0 : reader.GetInt32(abnormalFlagIDOrdinal);
+                                Console.WriteLine($"  AbnormalFlagID: {abnormalFlagIDValue} (Type: {reader.GetDataTypeName(abnormalFlagIDOrdinal)})");
+                                
+                                // AbnormalFlagDesc
+                                var abnormalFlagDescOrdinal = reader.GetOrdinal("AbnormalFlagDesc");
+                                var abnormalFlagDescValue = reader.IsDBNull(abnormalFlagDescOrdinal) ? null : reader.GetString(abnormalFlagDescOrdinal);
+                                Console.WriteLine($"  AbnormalFlagDesc: {abnormalFlagDescValue} (Type: {reader.GetDataTypeName(abnormalFlagDescOrdinal)})");
+                                
+                                // LabTestNTEID
+                                var labTestNTEIDOrdinal = reader.GetOrdinal("LabTestNTEID");
+                                var labTestNTEIDValue = reader.IsDBNull(labTestNTEIDOrdinal) ? 0 : reader.GetInt32(labTestNTEIDOrdinal);
+                                Console.WriteLine($"  LabTestNTEID: {labTestNTEIDValue} (Type: {reader.GetDataTypeName(labTestNTEIDOrdinal)})");
+                                
+                                // Source
+                                var sourceOrdinal = reader.GetOrdinal("Source");
+                                var sourceValue = reader.IsDBNull(sourceOrdinal) ? null : reader.GetString(sourceOrdinal);
+                                Console.WriteLine($"  Source: {sourceValue} (Type: {reader.GetDataTypeName(sourceOrdinal)})");
+                                
+                                // Comments
+                                var commentsOrdinal = reader.GetOrdinal("Comments");
+                                var commentsValue = reader.IsDBNull(commentsOrdinal) ? null : reader.GetString(commentsOrdinal);
+                                Console.WriteLine($"  Comments: {commentsValue} (Type: {reader.GetDataTypeName(commentsOrdinal)})");
+                                
                                 var detail = new PatientLabTestDetail
                                 {
-                                    LabTestOBRID = reader.IsDBNull(reader.GetOrdinal("LabTestOBRID")) ? 0 : reader.GetInt32(reader.GetOrdinal("LabTestOBRID")),
-                                    SnomedCode = reader.IsDBNull(reader.GetOrdinal("SnomedCode")) ? null : reader.GetString(reader.GetOrdinal("SnomedCode")),
-                                    MessageSubject = reader.IsDBNull(reader.GetOrdinal("MessageSubject")) ? null : reader.GetString(reader.GetOrdinal("MessageSubject")),
-                                    ObservationDateTime = reader.IsDBNull(reader.GetOrdinal("ObservationDateTime")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("ObservationDateTime")),
-                                    StatusChangeDateTime = reader.IsDBNull(reader.GetOrdinal("StatusChangeDateTime")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("StatusChangeDateTime")),
-                                    AppointmentID = reader.IsDBNull(reader.GetOrdinal("AppointmentID")) ? null : reader.GetString(reader.GetOrdinal("AppointmentID")),
-                                    LabTestOBXID = reader.IsDBNull(reader.GetOrdinal("LabTestOBXID")) ? 0 : reader.GetInt64(reader.GetOrdinal("LabTestOBXID")),
-                                    SnomedCode_2 = reader.IsDBNull(reader.GetOrdinal("SnomedCode_2")) ? null : reader.GetString(reader.GetOrdinal("SnomedCode_2")),
-                                    ResultName = reader.IsDBNull(reader.GetOrdinal("ResultName")) ? null : reader.GetString(reader.GetOrdinal("ResultName")),
-                                    ObservationCodingSystem = reader.IsDBNull(reader.GetOrdinal("ObservationCodingSystem")) ? null : reader.GetString(reader.GetOrdinal("ObservationCodingSystem")),
-                                    ObservationValue = reader.IsDBNull(reader.GetOrdinal("ObservationValue")) ? null : reader.GetString(reader.GetOrdinal("ObservationValue")),
-                                    Units = reader.IsDBNull(reader.GetOrdinal("Units")) ? null : reader.GetString(reader.GetOrdinal("Units")),
-                                    ReferenceRanges = reader.IsDBNull(reader.GetOrdinal("ReferenceRanges")) ? null : reader.GetString(reader.GetOrdinal("ReferenceRanges")),
-                                    AbnormalFlagID = reader.IsDBNull(reader.GetOrdinal("AbnormalFlagID")) ? 0 : reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
-                                    AbnormalFlagDesc = reader.IsDBNull(reader.GetOrdinal("AbnormalFlagDesc")) ? null : reader.GetString(reader.GetOrdinal("AbnormalFlagDesc")),
-                                    LabTestNTEID = reader.IsDBNull(reader.GetOrdinal("LabTestNTEID")) ? 0 : reader.GetInt32(reader.GetOrdinal("LabTestNTEID")),
-                                    Source = reader.IsDBNull(reader.GetOrdinal("Source")) ? null : reader.GetString(reader.GetOrdinal("Source")),
-                                    Comments = reader.IsDBNull(reader.GetOrdinal("Comments")) ? null : reader.GetString(reader.GetOrdinal("Comments"))
+                                    LabTestOBRID = labTestOBRIDValue,
+                                    SnomedCode = snomedCodeValue,
+                                    MessageSubject = messageSubjectValue,
+                                    ObservationDateTime = observationDateTimeValue,
+                                    StatusChangeDateTime = statusChangeDateTimeValue,
+                                    AppointmentID = appointmentIDValue,
+                                    LabTestOBXID = labTestOBXIDValue,
+                                    SnomedCode_2 = snomedCode2Value,
+                                    ResultName = resultNameValue,
+                                    ObservationCodingSystem = observationCodingSystemValue,
+                                    ObservationValue = observationValueValue,
+                                    Units = unitsValue,
+                                    ReferenceRanges = referenceRangesValue,
+                                    AbnormalFlagID = abnormalFlagIDValue,
+                                    AbnormalFlagDesc = abnormalFlagDescValue,
+                                    LabTestNTEID = labTestNTEIDValue,
+                                    Source = sourceValue,
+                                    Comments = commentsValue
                                 };
                                 
-                                response.Details.Add(detail);
+                                response.LabTestDetails.Add(detail);
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Error reading detail data: {ex.Message}");
+                                Console.WriteLine($"❌ Error reading lab test detail data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
                             }
                         }
                         
-                        Console.WriteLine($"✅ Retrieved {response.Details.Count} detail records for patient {patientId}");
+                        Console.WriteLine($"✅ Retrieved {response.LabTestDetails.Count} lab test detail records for patient {patientId}");
+                    }
+                    
+                    // Move to next result set (third dataset - Allergies)
+                    if (await reader.NextResultAsync())
+                    {
+                        Console.WriteLine("📋 Reading third dataset (Allergies information)...");
+                        Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                        
+                        // Print column information for third dataset
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
+                        
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                Console.WriteLine("🔍 Reading allergy fields with detailed logging:");
+                                
+                                // AllergyID
+                                var allergyIDOrdinal = reader.GetOrdinal("AllergyID");
+                                var allergyIDValue = reader.IsDBNull(allergyIDOrdinal) ? 0 : reader.GetInt32(allergyIDOrdinal);
+                                Console.WriteLine($"  AllergyID: {allergyIDValue} (Type: {reader.GetDataTypeName(allergyIDOrdinal)})");
+                                
+                                // AppointmentID
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID");
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                
+                                // AllergyType
+                                var allergyTypeOrdinal = reader.GetOrdinal("AllergyType");
+                                var allergyTypeValue = GetNullableString(reader, "AllergyType");
+                                Console.WriteLine($"  AllergyType: {allergyTypeValue} (Type: {reader.GetDataTypeName(allergyTypeOrdinal)})");
+                                
+                                // OnsetDate
+                                var onsetDateOrdinal = reader.GetOrdinal("OnsetDate");
+                                var onsetDateValue = GetNullableDateTime(reader, "OnsetDate");
+                                Console.WriteLine($"  OnsetDate: {onsetDateValue} (Type: {reader.GetDataTypeName(onsetDateOrdinal)})");
+                                
+                                // DeactivationReason
+                                var deactivationReasonOrdinal = reader.GetOrdinal("DeactivationReason");
+                                var deactivationReasonValue = GetNullableString(reader, "DeactivationReason");
+                                Console.WriteLine($"  DeactivationReason: {deactivationReasonValue} (Type: {reader.GetDataTypeName(deactivationReasonOrdinal)})");
+                                
+                                // ReactionID
+                                var reactionIDOrdinal = reader.GetOrdinal("ReactionID");
+                                var reactionIDValue = GetNullableByte(reader, "ReactionID");
+                                Console.WriteLine($"  ReactionID: {reactionIDValue} (Type: {reader.GetDataTypeName(reactionIDOrdinal)})");
+                                
+                                // ReactionTypeID
+                                var reactionTypeIDOrdinal = reader.GetOrdinal("ReactionTypeID");
+                                var reactionTypeIDValue = GetNullableByte(reader, "ReactionTypeID");
+                                Console.WriteLine($"  ReactionTypeID: {reactionTypeIDValue} (Type: {reader.GetDataTypeName(reactionTypeIDOrdinal)})");
+                                
+                                // SeverityID
+                                var severityIDOrdinal = reader.GetOrdinal("SeverityID");
+                                var severityIDValue = GetNullableByte(reader, "SeverityID");
+                                Console.WriteLine($"  SeverityID: {severityIDValue} (Type: {reader.GetDataTypeName(severityIDOrdinal)})");
+                                
+                                // Reaction
+                                var reactionOrdinal = reader.GetOrdinal("Reaction");
+                                var reactionValue = GetNullableString(reader, "Reaction");
+                                Console.WriteLine($"  Reaction: {reactionValue} (Type: {reader.GetDataTypeName(reactionOrdinal)})");
+                                
+                                // IsActive
+                                var isActiveOrdinal = reader.GetOrdinal("IsActive");
+                                var isActiveValue = reader.IsDBNull(isActiveOrdinal) ? false : reader.GetBoolean(isActiveOrdinal);
+                                Console.WriteLine($"  IsActive: {isActiveValue} (Type: {reader.GetDataTypeName(isActiveOrdinal)})");
+                                
+                                // PatientID
+                                var patientIDOrdinal = reader.GetOrdinal("PatientID");
+                                var patientIDValue = GetNullableInt32(reader, "PatientID");
+                                Console.WriteLine($"  PatientID: {patientIDValue} (Type: {reader.GetDataTypeName(patientIDOrdinal)})");
+                                
+                                // IsConfidential
+                                var isConfidentialOrdinal = reader.GetOrdinal("IsConfidential");
+                                var isConfidentialValue = reader.IsDBNull(isConfidentialOrdinal) ? false : reader.GetBoolean(isConfidentialOrdinal);
+                                Console.WriteLine($"  IsConfidential: {isConfidentialValue} (Type: {reader.GetDataTypeName(isConfidentialOrdinal)})");
+                                
+                                // PracticeID
+                                var practiceIDOrdinal = reader.GetOrdinal("PracticeID");
+                                var practiceIDValue = GetNullableInt32(reader, "PracticeID");
+                                Console.WriteLine($"  PracticeID: {practiceIDValue} (Type: {reader.GetDataTypeName(practiceIDOrdinal)})");
+                                
+                                // CategoryName
+                                var categoryNameOrdinal = reader.GetOrdinal("CategoryName");
+                                var categoryNameValue = GetNullableString(reader, "CategoryName");
+                                Console.WriteLine($"  CategoryName: {categoryNameValue} (Type: {reader.GetDataTypeName(categoryNameOrdinal)})");
+                                
+                                // Comment
+                                var commentOrdinal = reader.GetOrdinal("Comment");
+                                var commentValue = GetNullableString(reader, "Comment");
+                                Console.WriteLine($"  Comment: {commentValue} (Type: {reader.GetDataTypeName(commentOrdinal)})");
+                                
+                                // SubstanceTypeID
+                                var substanceTypeIDOrdinal = reader.GetOrdinal("SubstanceTypeID");
+                                var substanceTypeIDValue = GetNullableByte(reader, "SubstanceTypeID");
+                                Console.WriteLine($"  SubstanceTypeID: {substanceTypeIDValue} (Type: {reader.GetDataTypeName(substanceTypeIDOrdinal)})");
+                                
+                                // OtherSubstance
+                                var otherSubstanceOrdinal = reader.GetOrdinal("OtherSubstance");
+                                var otherSubstanceValue = GetNullableString(reader, "OtherSubstance");
+                                Console.WriteLine($"  OtherSubstance: {otherSubstanceValue} (Type: {reader.GetDataTypeName(otherSubstanceOrdinal)})");
+                                
+                                // MedicineTypeID
+                                var medicineTypeIDOrdinal = reader.GetOrdinal("MedicineTypeID");
+                                var medicineTypeIDValue = GetNullableByte(reader, "MedicineTypeID");
+                                Console.WriteLine($"  MedicineTypeID: {medicineTypeIDValue} (Type: {reader.GetDataTypeName(medicineTypeIDOrdinal)})");
+                                
+                                // ShowOnPortal
+                                var showOnPortalOrdinal = reader.GetOrdinal("ShowOnPortal");
+                                var showOnPortalValue = reader.IsDBNull(showOnPortalOrdinal) ? false : reader.GetBoolean(showOnPortalOrdinal);
+                                Console.WriteLine($"  ShowOnPortal: {showOnPortalValue} (Type: {reader.GetDataTypeName(showOnPortalOrdinal)})");
+                                
+                                // IsReviewed
+                                var isReviewedOrdinal = reader.GetOrdinal("IsReviewed");
+                                var isReviewedValue = reader.IsDBNull(isReviewedOrdinal) ? false : reader.GetBoolean(isReviewedOrdinal);
+                                Console.WriteLine($"  IsReviewed: {isReviewedValue} (Type: {reader.GetDataTypeName(isReviewedOrdinal)})");
+                                
+                                // IsHighlight
+                                var isHighlightOrdinal = reader.GetOrdinal("IsHighlight");
+                                var isHighlightValue = reader.IsDBNull(isHighlightOrdinal) ? false : reader.GetBoolean(isHighlightOrdinal);
+                                Console.WriteLine($"  IsHighlight: {isHighlightValue} (Type: {reader.GetDataTypeName(isHighlightOrdinal)})");
+                                
+                                // MedicineName
+                                var medicineNameOrdinal = reader.GetOrdinal("MedicineName");
+                                var medicineNameValue = GetNullableString(reader, "MedicineName");
+                                Console.WriteLine($"  MedicineName: {medicineNameValue} (Type: {reader.GetDataTypeName(medicineNameOrdinal)})");
+                                
+                                var allergy = new PatientAllergy
+                                {
+                                    AllergyID = allergyIDValue,
+                                    AppointmentID = appointmentIDValue,
+                                    AllergyType = allergyTypeValue,
+                                    OnsetDate = onsetDateValue,
+                                    DeactivationReason = deactivationReasonValue,
+                                    ReactionID = reactionIDValue,
+                                    ReactionTypeID = reactionTypeIDValue,
+                                    SeverityID = severityIDValue,
+                                    Reaction = reactionValue,
+                                    IsActive = isActiveValue,
+                                    PatientID = patientIDValue,
+                                    IsConfidential = isConfidentialValue,
+                                    PracticeID = practiceIDValue,
+                                    CategoryName = categoryNameValue,
+                                    Comment = commentValue,
+                                    SubstanceTypeID = substanceTypeIDValue,
+                                    OtherSubstance = otherSubstanceValue,
+                                    MedicineTypeID = medicineTypeIDValue,
+                                    ShowOnPortal = showOnPortalValue,
+                                    IsReviewed = isReviewedValue,
+                                    IsHighlight = isHighlightValue,
+                                    MedicineName = medicineNameValue
+                                };
+                                
+                                response.Allergies.Add(allergy);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading allergy data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                        
+                        Console.WriteLine($"✅ Retrieved {response.Allergies.Count} allergy records for patient {patientId}");
+                    }
+                    
+                    // Move to next result set (fourth dataset - Diagnoses)
+                    if (await reader.NextResultAsync())
+                    {
+                        Console.WriteLine("📋 Reading fourth dataset (Diagnoses information)...");
+                        Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                        
+                        // Print column information for fourth dataset
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
+                        
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                Console.WriteLine("🔍 Reading diagnosis fields with detailed logging:");
+                                
+                                // DiagnosisID
+                                var diagnosisIDOrdinal = reader.GetOrdinal("DiagnosisID");
+                                var diagnosisIDValue = reader.IsDBNull(diagnosisIDOrdinal) ? 0 : reader.GetInt32(diagnosisIDOrdinal);
+                                Console.WriteLine($"  DiagnosisID: {diagnosisIDValue} (Type: {reader.GetDataTypeName(diagnosisIDOrdinal)})");
+                                
+                                // AppointmentID
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID");
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                
+                                // DiseaseName
+                                var diseaseNameOrdinal = reader.GetOrdinal("DiseaseName");
+                                var diseaseNameValue = GetNullableString(reader, "DiseaseName");
+                                Console.WriteLine($"  DiseaseName: {diseaseNameValue} (Type: {reader.GetDataTypeName(diseaseNameOrdinal)})");
+                                
+                                // DiagnosisDate
+                                var diagnosisDateOrdinal = reader.GetOrdinal("DiagnosisDate");
+                                var diagnosisDateValue = GetNullableDateTime(reader, "DiagnosisDate");
+                                Console.WriteLine($"  DiagnosisDate: {diagnosisDateValue} (Type: {reader.GetDataTypeName(diagnosisDateOrdinal)})");
+                                
+                                // DiagnosisBy
+                                var diagnosisByOrdinal = reader.GetOrdinal("DiagnosisBy");
+                                var diagnosisByValue = GetNullableInt32(reader, "DiagnosisBy")?.ToString();
+                                Console.WriteLine($"  DiagnosisBy: {diagnosisByValue} (Type: {reader.GetDataTypeName(diagnosisByOrdinal)})");
+                                
+                                // Summary
+                                var summaryOrdinal = reader.GetOrdinal("Summary");
+                                var summaryValue = reader.IsDBNull(summaryOrdinal) ? null : reader.GetString(summaryOrdinal);
+                                Console.WriteLine($"  Summary: {summaryValue} (Type: {reader.GetDataTypeName(summaryOrdinal)})");
+                                
+                                // IsLongTerm
+                                var isLongTermOrdinal = reader.GetOrdinal("IsLongTerm");
+                                var isLongTermValue = reader.IsDBNull(isLongTermOrdinal) ? false : reader.GetBoolean(isLongTermOrdinal);
+                                Console.WriteLine($"  IsLongTerm: {isLongTermValue} (Type: {reader.GetDataTypeName(isLongTermOrdinal)})");
+                                
+                                // AddtoProblem
+                                var addtoProblemOrdinal = reader.GetOrdinal("AddtoProblem");
+                                var addtoProblemValue = reader.IsDBNull(addtoProblemOrdinal) ? false : reader.GetBoolean(addtoProblemOrdinal);
+                                Console.WriteLine($"  AddtoProblem: {addtoProblemValue} (Type: {reader.GetDataTypeName(addtoProblemOrdinal)})");
+                                
+                                // IsHighlighted
+                                var isHighlightedOrdinal = reader.GetOrdinal("IsHighlighted");
+                                var isHighlightedValue = reader.IsDBNull(isHighlightedOrdinal) ? false : reader.GetBoolean(isHighlightedOrdinal);
+                                Console.WriteLine($"  IsHighlighted: {isHighlightedValue} (Type: {reader.GetDataTypeName(isHighlightedOrdinal)})");
+                                
+                                // SequenceNo
+                                var sequenceNoOrdinal = reader.GetOrdinal("SequenceNo");
+                                var sequenceNoValue = GetNullableInt32(reader, "SequenceNo");
+                                Console.WriteLine($"  SequenceNo: {sequenceNoValue} (Type: {reader.GetDataTypeName(sequenceNoOrdinal)})");
+                                
+                                // IsActive
+                                var isActiveOrdinal = reader.GetOrdinal("IsActive");
+                                var isActiveValue = reader.IsDBNull(isActiveOrdinal) ? false : reader.GetBoolean(isActiveOrdinal);
+                                Console.WriteLine($"  IsActive: {isActiveValue} (Type: {reader.GetDataTypeName(isActiveOrdinal)})");
+                                
+                                // IsConfidential
+                                var isConfidentialOrdinal = reader.GetOrdinal("IsConfidential");
+                                var isConfidentialValue = reader.IsDBNull(isConfidentialOrdinal) ? false : reader.GetBoolean(isConfidentialOrdinal);
+                                Console.WriteLine($"  IsConfidential: {isConfidentialValue} (Type: {reader.GetDataTypeName(isConfidentialOrdinal)})");
+                                
+                                // DiagnosisType
+                                var diagnosisTypeOrdinal = reader.GetOrdinal("DiagnosisType");
+                                var diagnosisTypeValue = reader.IsDBNull(diagnosisTypeOrdinal) ? null : reader.GetString(diagnosisTypeOrdinal);
+                                Console.WriteLine($"  DiagnosisType: {diagnosisTypeValue} (Type: {reader.GetDataTypeName(diagnosisTypeOrdinal)})");
+                                
+                                // IsMapped
+                                var isMappedOrdinal = reader.GetOrdinal("IsMapped");
+                                var isMappedValue = reader.IsDBNull(isMappedOrdinal) ? false : reader.GetBoolean(isMappedOrdinal);
+                                Console.WriteLine($"  IsMapped: {isMappedValue} (Type: {reader.GetDataTypeName(isMappedOrdinal)})");
+                                
+                                // PracticeID
+                                var practiceIDOrdinal = reader.GetOrdinal("PracticeID");
+                                var practiceIDValue = GetNullableInt32(reader, "PracticeID");
+                                Console.WriteLine($"  PracticeID: {practiceIDValue} (Type: {reader.GetDataTypeName(practiceIDOrdinal)})");
+                                
+                                // OnSetDate
+                                var onSetDateOrdinal = reader.GetOrdinal("OnSetDate");
+                                var onSetDateValue = GetNullableDateTime(reader, "OnSetDate");
+                                Console.WriteLine($"  OnSetDate: {onSetDateValue} (Type: {reader.GetDataTypeName(onSetDateOrdinal)})");
+                                
+                                // MappedBy
+                                var mappedByOrdinal = reader.GetOrdinal("MappedBy");
+                                var mappedByValue = GetNullableInt32(reader, "MappedBy")?.ToString();
+                                Console.WriteLine($"  MappedBy: {mappedByValue} (Type: {reader.GetDataTypeName(mappedByOrdinal)})");
+                                
+                                // MappedDate
+                                var mappedDateOrdinal = reader.GetOrdinal("MappedDate");
+                                var mappedDateValue = GetNullableDateTime(reader, "MappedDate");
+                                Console.WriteLine($"  MappedDate: {mappedDateValue} (Type: {reader.GetDataTypeName(mappedDateOrdinal)})");
+                                
+                                // IsStopped
+                                var isStoppedOrdinal = reader.GetOrdinal("IsStopped");
+                                var isStoppedValue = reader.IsDBNull(isStoppedOrdinal) ? false : reader.GetBoolean(isStoppedOrdinal);
+                                Console.WriteLine($"  IsStopped: {isStoppedValue} (Type: {reader.GetDataTypeName(isStoppedOrdinal)})");
+                                
+                                // SnomedDiseaseName
+                                var snomedDiseaseNameOrdinal = reader.GetOrdinal("SnomedDiseaseName");
+                                var snomedDiseaseNameValue = GetNullableString(reader, "SnomedDiseaseName");
+                                Console.WriteLine($"  SnomedDiseaseName: {snomedDiseaseNameValue} (Type: {reader.GetDataTypeName(snomedDiseaseNameOrdinal)})");
+                                
+                                // PatientID
+                                var patientIDOrdinal = reader.GetOrdinal("PatientID");
+                                var patientIDValue = GetNullableInt32(reader, "PatientID");
+                                Console.WriteLine($"  PatientID: {patientIDValue} (Type: {reader.GetDataTypeName(patientIDOrdinal)})");
+                                
+                                // PracticeLocationID
+                                var practiceLocationIDOrdinal = reader.GetOrdinal("PracticeLocationID");
+                                var practiceLocationIDValue = GetNullableInt32(reader, "PracticeLocationID");
+                                Console.WriteLine($"  PracticeLocationID: {practiceLocationIDValue} (Type: {reader.GetDataTypeName(practiceLocationIDOrdinal)})");
+                                
+                                // IsPrimaryDiagnosis
+                                var isPrimaryDiagnosisOrdinal = reader.GetOrdinal("IsPrimaryDiagnosis");
+                                var isPrimaryDiagnosisValue = reader.IsDBNull(isPrimaryDiagnosisOrdinal) ? false : reader.GetBoolean(isPrimaryDiagnosisOrdinal);
+                                Console.WriteLine($"  IsPrimaryDiagnosis: {isPrimaryDiagnosisValue} (Type: {reader.GetDataTypeName(isPrimaryDiagnosisOrdinal)})");
+                                
+                                var diagnosis = new PatientDiagnosis
+                                {
+                                    DiagnosisID = diagnosisIDValue,
+                                    AppointmentID = appointmentIDValue,
+                                    DiseaseName = diseaseNameValue,
+                                    DiagnosisDate = diagnosisDateValue,
+                                    DiagnosisBy = diagnosisByValue,
+                                    Summary = summaryValue,
+                                    IsLongTerm = isLongTermValue,
+                                    AddtoProblem = addtoProblemValue,
+                                    IsHighlighted = isHighlightedValue,
+                                    SequenceNo = sequenceNoValue,
+                                    IsActive = isActiveValue,
+                                    IsConfidential = isConfidentialValue,
+                                    DiagnosisType = diagnosisTypeValue,
+                                    IsMapped = isMappedValue,
+                                    PracticeID = practiceIDValue,
+                                    OnSetDate = onSetDateValue,
+                                    MappedBy = mappedByValue,
+                                    MappedDate = mappedDateValue,
+                                    IsStopped = isStoppedValue,
+                                    SnomedDiseaseName = snomedDiseaseNameValue,
+                                    PatientID = patientIDValue,
+                                    PracticeLocationID = practiceLocationIDValue,
+                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue
+                                };
+                                
+                                response.Diagnoses.Add(diagnosis);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading diagnosis data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                        
+                        Console.WriteLine($"✅ Retrieved {response.Diagnoses.Count} diagnosis records for patient {patientId}");
                     }
                     
                     Console.WriteLine($"✅ Retrieved complete lab test data for patient {patientId}");
@@ -947,6 +1453,417 @@ namespace LabTestApi.Services
                 Console.WriteLine($"❌ Database connection failed: {ex.Message}");
                 Console.WriteLine($"📋 Connection string: {_connectionString}");
                 return null;
+            }
+        }
+
+        public async Task<List<PatientAllergy>> GetPatientAllergiesAsync(long patientId)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Getting allergies for patient ID: {patientId} using SP");
+                
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    
+                    // Use the same SP but navigate to the third result set (allergies)
+                    using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
+                    command.Parameters.AddWithValue("@pPatientID", patientId);
+                    using var reader = await command.ExecuteReaderAsync();
+                    
+                    var allergies = new List<PatientAllergy>();
+                    
+                    // Navigate to third result set (allergies)
+                    // First result set: Header/Patient info - read and skip
+                    Console.WriteLine("📋 Reading first result set (header)...");
+                    int firstSetCount = 0;
+                    while (await reader.ReadAsync()) { firstSetCount++; }
+                    Console.WriteLine($"📊 First result set had {firstSetCount} rows");
+                    await reader.NextResultAsync();
+                    
+                    // Second result set: Lab test details - read and skip
+                    Console.WriteLine("📋 Reading second result set (lab details)...");
+                    int secondSetCount = 0;
+                    while (await reader.ReadAsync()) { secondSetCount++; }
+                    Console.WriteLine($"📊 Second result set had {secondSetCount} rows");
+                    await reader.NextResultAsync();
+                    
+                    // Third result set: Allergies
+                    Console.WriteLine("📋 Reading allergies dataset from SP...");
+                    Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                    Console.WriteLine($"📋 Result set available: {!reader.IsClosed}");
+                    
+                                            while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                Console.WriteLine("🔍 Reading allergy fields with detailed logging (GetPatientAllergiesAsync):");
+                                
+                                // AllergyID
+                                var allergyIDOrdinal = reader.GetOrdinal("AllergyID");
+                                var allergyIDValue = reader.IsDBNull(allergyIDOrdinal) ? 0 : reader.GetInt32(allergyIDOrdinal);
+                                Console.WriteLine($"  AllergyID: {allergyIDValue} (Type: {reader.GetDataTypeName(allergyIDOrdinal)})");
+                                
+                                // AppointmentID
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID");
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                
+                                // AllergyType
+                                var allergyTypeOrdinal = reader.GetOrdinal("AllergyType");
+                                var allergyTypeValue = reader.IsDBNull(allergyTypeOrdinal) ? null : reader.GetString(allergyTypeOrdinal);
+                                Console.WriteLine($"  AllergyType: {allergyTypeValue} (Type: {reader.GetDataTypeName(allergyTypeOrdinal)})");
+                                
+                                // OnsetDate
+                                var onsetDateOrdinal = reader.GetOrdinal("OnsetDate");
+                                var onsetDateValue = GetNullableDateTime(reader, "OnsetDate");
+                                Console.WriteLine($"  OnsetDate: {onsetDateValue} (Type: {reader.GetDataTypeName(onsetDateOrdinal)})");
+                                
+                                // DeactivationReason
+                                var deactivationReasonOrdinal = reader.GetOrdinal("DeactivationReason");
+                                var deactivationReasonValue = reader.IsDBNull(deactivationReasonOrdinal) ? null : reader.GetString(deactivationReasonOrdinal);
+                                Console.WriteLine($"  DeactivationReason: {deactivationReasonValue} (Type: {reader.GetDataTypeName(deactivationReasonOrdinal)})");
+                                
+                                // ReactionID
+                                var reactionIDOrdinal = reader.GetOrdinal("ReactionID");
+                                var reactionIDValue = GetNullableByte(reader, "ReactionID");
+                                Console.WriteLine($"  ReactionID: {reactionIDValue} (Type: {reader.GetDataTypeName(reactionIDOrdinal)})");
+                                
+                                // ReactionTypeID
+                                var reactionTypeIDOrdinal = reader.GetOrdinal("ReactionTypeID");
+                                var reactionTypeIDValue = GetNullableByte(reader, "ReactionTypeID");
+                                Console.WriteLine($"  ReactionTypeID: {reactionTypeIDValue} (Type: {reader.GetDataTypeName(reactionTypeIDOrdinal)})");
+                                
+                                // SeverityID
+                                var severityIDOrdinal = reader.GetOrdinal("SeverityID");
+                                var severityIDValue = GetNullableByte(reader, "SeverityID");
+                                Console.WriteLine($"  SeverityID: {severityIDValue} (Type: {reader.GetDataTypeName(severityIDOrdinal)})");
+                                
+                                // Reaction
+                                var reactionOrdinal = reader.GetOrdinal("Reaction");
+                                var reactionValue = reader.IsDBNull(reactionOrdinal) ? null : reader.GetString(reactionOrdinal);
+                                Console.WriteLine($"  Reaction: {reactionValue} (Type: {reader.GetDataTypeName(reactionOrdinal)})");
+                                
+                                // IsActive
+                                var isActiveOrdinal = reader.GetOrdinal("IsActive");
+                                var isActiveValue = reader.IsDBNull(isActiveOrdinal) ? false : reader.GetBoolean(isActiveOrdinal);
+                                Console.WriteLine($"  IsActive: {isActiveValue} (Type: {reader.GetDataTypeName(isActiveOrdinal)})");
+                                
+                                // PatientID
+                                var patientIDOrdinal = reader.GetOrdinal("PatientID");
+                                var patientIDValue = GetNullableInt32(reader, "PatientID");
+                                Console.WriteLine($"  PatientID: {patientIDValue} (Type: {reader.GetDataTypeName(patientIDOrdinal)})");
+                                
+                                // IsConfidential
+                                var isConfidentialOrdinal = reader.GetOrdinal("IsConfidential");
+                                var isConfidentialValue = reader.IsDBNull(isConfidentialOrdinal) ? false : reader.GetBoolean(isConfidentialOrdinal);
+                                Console.WriteLine($"  IsConfidential: {isConfidentialValue} (Type: {reader.GetDataTypeName(isConfidentialOrdinal)})");
+                                
+                                // PracticeID
+                                var practiceIDOrdinal = reader.GetOrdinal("PracticeID");
+                                var practiceIDValue = GetNullableInt32(reader, "PracticeID");
+                                Console.WriteLine($"  PracticeID: {practiceIDValue} (Type: {reader.GetDataTypeName(practiceIDOrdinal)})");
+                                
+                                // CategoryName
+                                var categoryNameOrdinal = reader.GetOrdinal("CategoryName");
+                                var categoryNameValue = reader.IsDBNull(categoryNameOrdinal) ? null : reader.GetString(categoryNameOrdinal);
+                                Console.WriteLine($"  CategoryName: {categoryNameValue} (Type: {reader.GetDataTypeName(categoryNameOrdinal)})");
+                                
+                                // Comment
+                                var commentOrdinal = reader.GetOrdinal("Comment");
+                                var commentValue = reader.IsDBNull(commentOrdinal) ? null : reader.GetString(commentOrdinal);
+                                Console.WriteLine($"  Comment: {commentValue} (Type: {reader.GetDataTypeName(commentOrdinal)})");
+                                
+                                // SubstanceTypeID
+                                var substanceTypeIDOrdinal = reader.GetOrdinal("SubstanceTypeID");
+                                var substanceTypeIDValue = GetNullableByte(reader, "SubstanceTypeID");
+                                Console.WriteLine($"  SubstanceTypeID: {substanceTypeIDValue} (Type: {reader.GetDataTypeName(substanceTypeIDOrdinal)})");
+                                
+                                // OtherSubstance
+                                var otherSubstanceOrdinal = reader.GetOrdinal("OtherSubstance");
+                                var otherSubstanceValue = reader.IsDBNull(otherSubstanceOrdinal) ? null : reader.GetString(otherSubstanceOrdinal);
+                                Console.WriteLine($"  OtherSubstance: {otherSubstanceValue} (Type: {reader.GetDataTypeName(otherSubstanceOrdinal)})");
+                                
+                                // MedicineTypeID
+                                var medicineTypeIDOrdinal = reader.GetOrdinal("MedicineTypeID");
+                                var medicineTypeIDValue = GetNullableByte(reader, "MedicineTypeID");
+                                Console.WriteLine($"  MedicineTypeID: {medicineTypeIDValue} (Type: {reader.GetDataTypeName(medicineTypeIDOrdinal)})");
+                                
+                                // ShowOnPortal
+                                var showOnPortalOrdinal = reader.GetOrdinal("ShowOnPortal");
+                                var showOnPortalValue = reader.IsDBNull(showOnPortalOrdinal) ? false : reader.GetBoolean(showOnPortalOrdinal);
+                                Console.WriteLine($"  ShowOnPortal: {showOnPortalValue} (Type: {reader.GetDataTypeName(showOnPortalOrdinal)})");
+                                
+                                // IsReviewed
+                                var isReviewedOrdinal = reader.GetOrdinal("IsReviewed");
+                                var isReviewedValue = reader.IsDBNull(isReviewedOrdinal) ? false : reader.GetBoolean(isReviewedOrdinal);
+                                Console.WriteLine($"  IsReviewed: {isReviewedValue} (Type: {reader.GetDataTypeName(isReviewedOrdinal)})");
+                                
+                                // IsHighlight
+                                var isHighlightOrdinal = reader.GetOrdinal("IsHighlight");
+                                var isHighlightValue = reader.IsDBNull(isHighlightOrdinal) ? false : reader.GetBoolean(isHighlightOrdinal);
+                                Console.WriteLine($"  IsHighlight: {isHighlightValue} (Type: {reader.GetDataTypeName(isHighlightOrdinal)})");
+                                
+                                // MedicineName
+                                var medicineNameOrdinal = reader.GetOrdinal("MedicineName");
+                                var medicineNameValue = reader.IsDBNull(medicineNameOrdinal) ? null : reader.GetString(medicineNameOrdinal);
+                                Console.WriteLine($"  MedicineName: {medicineNameValue} (Type: {reader.GetDataTypeName(medicineNameOrdinal)})");
+                                
+                                var allergy = new PatientAllergy
+                                {
+                                    AllergyID = allergyIDValue,
+                                    AppointmentID = appointmentIDValue,
+                                    AllergyType = allergyTypeValue,
+                                    OnsetDate = onsetDateValue,
+                                    DeactivationReason = deactivationReasonValue,
+                                    ReactionID = reactionIDValue,
+                                    ReactionTypeID = reactionTypeIDValue,
+                                    SeverityID = severityIDValue,
+                                    Reaction = reactionValue,
+                                    IsActive = isActiveValue,
+                                    PatientID = patientIDValue,
+                                    IsConfidential = isConfidentialValue,
+                                    PracticeID = practiceIDValue,
+                                    CategoryName = categoryNameValue,
+                                    Comment = commentValue,
+                                    SubstanceTypeID = substanceTypeIDValue,
+                                    OtherSubstance = otherSubstanceValue,
+                                    MedicineTypeID = medicineTypeIDValue,
+                                    ShowOnPortal = showOnPortalValue,
+                                    IsReviewed = isReviewedValue,
+                                    IsHighlight = isHighlightValue,
+                                    MedicineName = medicineNameValue
+                                };
+                                
+                                allergies.Add(allergy);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading allergy data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    
+                    Console.WriteLine($"✅ Retrieved {allergies.Count} allergy records for patient {patientId}");
+                    return allergies;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting allergies: {ex.Message}");
+                return new List<PatientAllergy>();
+            }
+        }
+
+        public async Task<List<PatientDiagnosis>> GetPatientDiagnosesAsync(long patientId)
+        {
+            try
+            {
+                Console.WriteLine($"🔍 Getting diagnoses for patient ID: {patientId} using SP");
+                
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    
+                    // Use the same SP but navigate to the fourth result set (diagnoses)
+                    using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
+                    command.Parameters.AddWithValue("@pPatientID", patientId);
+                    using var reader = await command.ExecuteReaderAsync();
+                    
+                    var diagnoses = new List<PatientDiagnosis>();
+                    
+                    // Navigate to fourth result set (diagnoses)
+                    // First result set: Header/Patient info - read and skip
+                    Console.WriteLine("📋 Reading first result set (header)...");
+                    int firstSetCount = 0;
+                    while (await reader.ReadAsync()) { firstSetCount++; }
+                    Console.WriteLine($"📊 First result set had {firstSetCount} rows");
+                    await reader.NextResultAsync();
+                    
+                    // Second result set: Lab test details - read and skip
+                    Console.WriteLine("📋 Reading second result set (lab details)...");
+                    int secondSetCount = 0;
+                    while (await reader.ReadAsync()) { secondSetCount++; }
+                    Console.WriteLine($"📊 Second result set had {secondSetCount} rows");
+                    await reader.NextResultAsync();
+                    
+                    // Third result set: Allergies - read and skip
+                    Console.WriteLine("📋 Reading third result set (allergies)...");
+                    int thirdSetCount = 0;
+                    while (await reader.ReadAsync()) { thirdSetCount++; }
+                    Console.WriteLine($"📊 Third result set had {thirdSetCount} rows");
+                    await reader.NextResultAsync();
+                    
+                    // Fourth result set: Diagnoses
+                    Console.WriteLine("📋 Reading diagnoses dataset from SP...");
+                    Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                    Console.WriteLine($"📋 Result set available: {!reader.IsClosed}");
+                    
+                                            while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                Console.WriteLine("🔍 Reading diagnosis fields with detailed logging (GetPatientDiagnosesAsync):");
+                                
+                                // DiagnosisID
+                                var diagnosisIDOrdinal = reader.GetOrdinal("DiagnosisID");
+                                var diagnosisIDValue = reader.IsDBNull(diagnosisIDOrdinal) ? 0 : reader.GetInt32(diagnosisIDOrdinal);
+                                Console.WriteLine($"  DiagnosisID: {diagnosisIDValue} (Type: {reader.GetDataTypeName(diagnosisIDOrdinal)})");
+                                
+                                // AppointmentID
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID");
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                
+                                // DiseaseName
+                                var diseaseNameOrdinal = reader.GetOrdinal("DiseaseName");
+                                var diseaseNameValue = reader.IsDBNull(diseaseNameOrdinal) ? null : reader.GetString(diseaseNameOrdinal);
+                                Console.WriteLine($"  DiseaseName: {diseaseNameValue} (Type: {reader.GetDataTypeName(diseaseNameOrdinal)})");
+                                
+                                // DiagnosisDate
+                                var diagnosisDateOrdinal = reader.GetOrdinal("DiagnosisDate");
+                                var diagnosisDateValue = GetNullableDateTime(reader, "DiagnosisDate");
+                                Console.WriteLine($"  DiagnosisDate: {diagnosisDateValue} (Type: {reader.GetDataTypeName(diagnosisDateOrdinal)})");
+                                
+                                // DiagnosisBy
+                                var diagnosisByOrdinal = reader.GetOrdinal("DiagnosisBy");
+                                var diagnosisByValue = reader.IsDBNull(diagnosisByOrdinal) ? null : reader.GetInt32(diagnosisByOrdinal).ToString();
+                                Console.WriteLine($"  DiagnosisBy: {diagnosisByValue} (Type: {reader.GetDataTypeName(diagnosisByOrdinal)})");
+                                
+                                // Summary
+                                var summaryOrdinal = reader.GetOrdinal("Summary");
+                                var summaryValue = reader.IsDBNull(summaryOrdinal) ? null : reader.GetString(summaryOrdinal);
+                                Console.WriteLine($"  Summary: {summaryValue} (Type: {reader.GetDataTypeName(summaryOrdinal)})");
+                                
+                                // IsLongTerm
+                                var isLongTermOrdinal = reader.GetOrdinal("IsLongTerm");
+                                var isLongTermValue = reader.IsDBNull(isLongTermOrdinal) ? false : reader.GetBoolean(isLongTermOrdinal);
+                                Console.WriteLine($"  IsLongTerm: {isLongTermValue} (Type: {reader.GetDataTypeName(isLongTermOrdinal)})");
+                                
+                                // AddtoProblem
+                                var addtoProblemOrdinal = reader.GetOrdinal("AddtoProblem");
+                                var addtoProblemValue = reader.IsDBNull(addtoProblemOrdinal) ? false : reader.GetBoolean(addtoProblemOrdinal);
+                                Console.WriteLine($"  AddtoProblem: {addtoProblemValue} (Type: {reader.GetDataTypeName(addtoProblemOrdinal)})");
+                                
+                                // IsHighlighted
+                                var isHighlightedOrdinal = reader.GetOrdinal("IsHighlighted");
+                                var isHighlightedValue = reader.IsDBNull(isHighlightedOrdinal) ? false : reader.GetBoolean(isHighlightedOrdinal);
+                                Console.WriteLine($"  IsHighlighted: {isHighlightedValue} (Type: {reader.GetDataTypeName(isHighlightedOrdinal)})");
+                                
+                                // SequenceNo
+                                var sequenceNoOrdinal = reader.GetOrdinal("SequenceNo");
+                                var sequenceNoValue = GetNullableInt32(reader, "SequenceNo");
+                                Console.WriteLine($"  SequenceNo: {sequenceNoValue} (Type: {reader.GetDataTypeName(sequenceNoOrdinal)})");
+                                
+                                // IsActive
+                                var isActiveOrdinal = reader.GetOrdinal("IsActive");
+                                var isActiveValue = reader.IsDBNull(isActiveOrdinal) ? false : reader.GetBoolean(isActiveOrdinal);
+                                Console.WriteLine($"  IsActive: {isActiveValue} (Type: {reader.GetDataTypeName(isActiveOrdinal)})");
+                                
+                                // IsConfidential
+                                var isConfidentialOrdinal = reader.GetOrdinal("IsConfidential");
+                                var isConfidentialValue = reader.IsDBNull(isConfidentialOrdinal) ? false : reader.GetBoolean(isConfidentialOrdinal);
+                                Console.WriteLine($"  IsConfidential: {isConfidentialValue} (Type: {reader.GetDataTypeName(isConfidentialOrdinal)})");
+                                
+                                // DiagnosisType
+                                var diagnosisTypeOrdinal = reader.GetOrdinal("DiagnosisType");
+                                var diagnosisTypeValue = reader.IsDBNull(diagnosisTypeOrdinal) ? null : reader.GetString(diagnosisTypeOrdinal);
+                                Console.WriteLine($"  DiagnosisType: {diagnosisTypeValue} (Type: {reader.GetDataTypeName(diagnosisTypeOrdinal)})");
+                                
+                                // IsMapped
+                                var isMappedOrdinal = reader.GetOrdinal("IsMapped");
+                                var isMappedValue = reader.IsDBNull(isMappedOrdinal) ? false : reader.GetBoolean(isMappedOrdinal);
+                                Console.WriteLine($"  IsMapped: {isMappedValue} (Type: {reader.GetDataTypeName(isMappedOrdinal)})");
+                                
+                                // PracticeID
+                                var practiceIDOrdinal = reader.GetOrdinal("PracticeID");
+                                var practiceIDValue = GetNullableInt32(reader, "PracticeID");
+                                Console.WriteLine($"  PracticeID: {practiceIDValue} (Type: {reader.GetDataTypeName(practiceIDOrdinal)})");
+                                
+                                // OnSetDate
+                                var onSetDateOrdinal = reader.GetOrdinal("OnSetDate");
+                                var onSetDateValue = GetNullableDateTime(reader, "OnSetDate");
+                                Console.WriteLine($"  OnSetDate: {onSetDateValue} (Type: {reader.GetDataTypeName(onSetDateOrdinal)})");
+                                
+                                // MappedBy
+                                var mappedByOrdinal = reader.GetOrdinal("MappedBy");
+                                var mappedByValue = reader.IsDBNull(mappedByOrdinal) ? null : reader.GetInt32(mappedByOrdinal).ToString();
+                                Console.WriteLine($"  MappedBy: {mappedByValue} (Type: {reader.GetDataTypeName(mappedByOrdinal)})");
+                                
+                                // MappedDate
+                                var mappedDateOrdinal = reader.GetOrdinal("MappedDate");
+                                var mappedDateValue = GetNullableDateTime(reader, "MappedDate");
+                                Console.WriteLine($"  MappedDate: {mappedDateValue} (Type: {reader.GetDataTypeName(mappedDateOrdinal)})");
+                                
+                                // IsStopped
+                                var isStoppedOrdinal = reader.GetOrdinal("IsStopped");
+                                var isStoppedValue = reader.IsDBNull(isStoppedOrdinal) ? false : reader.GetBoolean(isStoppedOrdinal);
+                                Console.WriteLine($"  IsStopped: {isStoppedValue} (Type: {reader.GetDataTypeName(isStoppedOrdinal)})");
+                                
+                                // SnomedDiseaseName
+                                var snomedDiseaseNameOrdinal = reader.GetOrdinal("SnomedDiseaseName");
+                                var snomedDiseaseNameValue = reader.IsDBNull(snomedDiseaseNameOrdinal) ? null : reader.GetString(snomedDiseaseNameOrdinal);
+                                Console.WriteLine($"  SnomedDiseaseName: {snomedDiseaseNameValue} (Type: {reader.GetDataTypeName(snomedDiseaseNameOrdinal)})");
+                                
+                                // PatientID
+                                var patientIDOrdinal = reader.GetOrdinal("PatientID");
+                                var patientIDValue = GetNullableInt32(reader, "PatientID");
+                                Console.WriteLine($"  PatientID: {patientIDValue} (Type: {reader.GetDataTypeName(patientIDOrdinal)})");
+                                
+                                // PracticeLocationID
+                                var practiceLocationIDOrdinal = reader.GetOrdinal("PracticeLocationID");
+                                var practiceLocationIDValue = GetNullableInt32(reader, "PracticeLocationID");
+                                Console.WriteLine($"  PracticeLocationID: {practiceLocationIDValue} (Type: {reader.GetDataTypeName(practiceLocationIDOrdinal)})");
+                                
+                                // IsPrimaryDiagnosis
+                                var isPrimaryDiagnosisOrdinal = reader.GetOrdinal("IsPrimaryDiagnosis");
+                                var isPrimaryDiagnosisValue = reader.IsDBNull(isPrimaryDiagnosisOrdinal) ? false : reader.GetBoolean(isPrimaryDiagnosisOrdinal);
+                                Console.WriteLine($"  IsPrimaryDiagnosis: {isPrimaryDiagnosisValue} (Type: {reader.GetDataTypeName(isPrimaryDiagnosisOrdinal)})");
+                                
+                                var diagnosis = new PatientDiagnosis
+                                {
+                                    DiagnosisID = diagnosisIDValue,
+                                    AppointmentID = appointmentIDValue,
+                                    DiseaseName = diseaseNameValue,
+                                    DiagnosisDate = diagnosisDateValue,
+                                    DiagnosisBy = diagnosisByValue,
+                                    Summary = summaryValue,
+                                    IsLongTerm = isLongTermValue,
+                                    AddtoProblem = addtoProblemValue,
+                                    IsHighlighted = isHighlightedValue,
+                                    SequenceNo = sequenceNoValue,
+                                    IsActive = isActiveValue,
+                                    IsConfidential = isConfidentialValue,
+                                    DiagnosisType = diagnosisTypeValue,
+                                    IsMapped = isMappedValue,
+                                    PracticeID = practiceIDValue,
+                                    OnSetDate = onSetDateValue,
+                                    MappedBy = mappedByValue,
+                                    MappedDate = mappedDateValue,
+                                    IsStopped = isStoppedValue,
+                                    SnomedDiseaseName = snomedDiseaseNameValue,
+                                    PatientID = patientIDValue,
+                                    PracticeLocationID = practiceLocationIDValue,
+                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue
+                                };
+                                
+                                diagnoses.Add(diagnosis);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading diagnosis data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    
+                    Console.WriteLine($"✅ Retrieved {diagnoses.Count} diagnosis records for patient {patientId}");
+                    return diagnoses;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting diagnoses: {ex.Message}");
+                return new List<PatientDiagnosis>();
             }
         }
     }

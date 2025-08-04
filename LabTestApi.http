@@ -75,3 +75,15 @@ GET {{LabTestApi_HostAddress}}/api/labtest/patient-labtest-updated/46359
 Accept: application/json
 
 ###
+
+### Get patient allergies
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-allergies/46359
+Accept: application/json
+
+###
+
+### Get patient diagnoses
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-diagnoses/46359
+Accept: application/json
+
+###

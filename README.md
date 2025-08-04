@@ -21,6 +21,8 @@ A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQ
 | GET | `/api/labtest/patient/{patientId}` | Get lab test data by patient ID (string) |
 | GET | `/api/labtest/patient-sp/{patientId:long}` | Get lab test data by patient ID using GetPatientLabTestData SP (bigint) |
 | GET | `/api/labtest/patient-labtest-updated/{patientId:long}` | Get structured lab test data using updated GetPatientLabTestData SP (header + details) |
+| GET | `/api/labtest/patient-allergies/{patientId:long}` | Get patient allergies |
+| GET | `/api/labtest/patient-diagnoses/{patientId:long}` | Get patient diagnoses |
 | GET | `/api/labtest/patient-info/{patientId:long}` | Get patient information using GetPatientnameforLAB SP (includes ethnicity) |
 | GET | `/api/labtest/daterange?startDate={date}&endDate={date}` | Get lab test data by date range |
 | GET | `/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}` | Get lab test data with flexible filters |
@@ -50,7 +52,7 @@ A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQ
 
 ### Database Schema
 
-The API connects to SQL Server database `PMS_NZ_Local_NZTFS` and accesses tables in the `appointment` schema:
+The API connects to SQL Server database `PMS_NZ_V2` and accesses tables in the `appointment` schema:
 
 - `tbllabtest_msh` - Message header information
 - `tbllabtest_obr` - Observation request information  
@@ -134,7 +136,7 @@ The application uses the connection string from `appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=dbserver-local;Initial Catalog=PMS_NZ_Local_NZTFS;User ID=pms_nz;Password=pms@@nz;TrustServerCertificate=True;Connection Timeout=120;"
+    "DefaultConnection": "Data Source=dbserver-local;Initial Catalog=PMS_NZ_V2;User ID=pms_nz;Password=pms@@nz;TrustServerCertificate=True;Connection Timeout=120;"
   }
 }
 ```

@@ -94,6 +94,8 @@ app.MapGet("/api-docs", () => new
         new { method = "GET", path = "/api/labtest/patient/{patientId}", description = "Get lab test data by patient ID (string)" },
         new { method = "GET", path = "/api/labtest/patient-sp/{patientId:long}", description = "Get lab test data by patient ID using GetPatientLabTestData SP (bigint)" },
         new { method = "GET", path = "/api/labtest/patient-labtest-updated/{patientId:long}", description = "Get structured lab test data using updated GetPatientLabTestData SP (header + details)" },
+        new { method = "GET", path = "/api/labtest/patient-allergies/{patientId:long}", description = "Get patient allergies" },
+        new { method = "GET", path = "/api/labtest/patient-diagnoses/{patientId:long}", description = "Get patient diagnoses" },
         new { method = "GET", path = "/api/labtest/patient-info/{patientId:long}", description = "Get patient information using GetPatientnameforLAB SP (includes ethnicity)" },
         new { method = "GET", path = "/api/labtest/daterange?startDate={date}&endDate={date}", description = "Get lab test data by date range" },
         new { method = "GET", path = "/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}", description = "Get lab test data with flexible filters" },

@@ -124,11 +124,15 @@ namespace LabTestApi.Controllers
         /// <param name="patientId">Patient ID (bigint)</param>
         /// <returns>Lab test data for the specified patient</returns>
         [HttpGet("patient-sp/{patientId:long}")]
-        public async Task<ActionResult<IEnumerable<LabTestData>>> GetPatientLabTestData(long patientId)
+        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestData(long patientId)
         {
             try
             {
-                var result = await _labTestService.GetPatientLabTestDataAsync(patientId);
+                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId);
+                if (result == null)
+                {
+                    return NotFound($"Patient lab test data for patient ID {patientId} not found");
+                }
                 return Ok(result);
             }
             catch (Exception ex)
@@ -175,6 +179,44 @@ namespace LabTestApi.Controllers
                 {
                     return NotFound($"Patient lab test data for patient ID {patientId} not found");
                 }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Get patient allergies
+        /// </summary>
+        /// <param name="patientId">Patient ID (bigint)</param>
+        /// <returns>List of patient allergies</returns>
+        [HttpGet("patient-allergies/{patientId:long}")]
+        public async Task<ActionResult<List<PatientAllergy>>> GetPatientAllergies(long patientId)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientAllergiesAsync(patientId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Get patient diagnoses
+        /// </summary>
+        /// <param name="patientId">Patient ID (bigint)</param>
+        /// <returns>List of patient diagnoses</returns>
+        [HttpGet("patient-diagnoses/{patientId:long}")]
+        public async Task<ActionResult<List<PatientDiagnosis>>> GetPatientDiagnoses(long patientId)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientDiagnosesAsync(patientId);
                 return Ok(result);
             }
             catch (Exception ex)
