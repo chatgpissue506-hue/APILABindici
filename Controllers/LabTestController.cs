@@ -123,7 +123,7 @@ namespace LabTestApi.Controllers
         /// </summary>
         /// <param name="patientId">Patient ID (bigint)</param>
         /// <returns>Lab test data for the specified patient</returns>
-        [HttpGet("patient-sp/{patientId:long}")]
+        [HttpGet("patientinboxdetail/{patientId:long}")]
         public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestData(long patientId)
         {
             try
