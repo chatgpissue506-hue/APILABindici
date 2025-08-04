@@ -37,5 +37,6 @@ namespace LabTestApi.Models
         public string? Source { get; set; }
         public string? Comments { get; set; }
         public string? Ethnicity { get; set; }
+        public int PriorityID { get; set; }
     }
 }

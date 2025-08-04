@@ -87,3 +87,27 @@ GET {{LabTestApi_HostAddress}}/api/labtest/patient-diagnoses/46359
 Accept: application/json
 
 ###
+
+### Get patient lab observations (new endpoint)
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359
+Accept: application/json
+
+###
+
+### Get patient lab observations with observation text filter
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359?observationText=Blood
+Accept: application/json
+
+###
+
+### Get patient lab observations with practice ID filter
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359?practiceId=1
+Accept: application/json
+
+###
+
+### Get patient lab observations with both filters
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359?observationText=Blood&practiceId=1
+Accept: application/json
+
+###

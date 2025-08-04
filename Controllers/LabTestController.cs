@@ -224,5 +224,29 @@ namespace LabTestApi.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Get patient lab observations with optional filters
+        /// </summary>
+        /// <param name="patientId">Patient ID (int)</param>
+        /// <param name="observationText">Optional observation text filter</param>
+        /// <param name="practiceId">Optional practice ID filter</param>
+        /// <returns>List of patient lab observations</returns>
+        [HttpGet("patient-observations/{patientId:int}")]
+        public async Task<ActionResult<List<PatientLabObservation>>> GetPatientLabObservations(
+            int patientId,
+            [FromQuery] string? observationText = null,
+            [FromQuery] int? practiceId = null)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientLabObservationsAsync(patientId, observationText, practiceId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

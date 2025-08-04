@@ -24,6 +24,7 @@ A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQ
 | GET | `/api/labtest/patient-allergies/{patientId:long}` | Get patient allergies |
 | GET | `/api/labtest/patient-diagnoses/{patientId:long}` | Get patient diagnoses |
 | GET | `/api/labtest/patient-info/{patientId:long}` | Get patient information using GetPatientnameforLAB SP (includes ethnicity) |
+| GET | `/api/labtest/patient-observations/{patientId:int}?observationText={text}&practiceId={id}` | Get patient lab observations with optional filters |
 | GET | `/api/labtest/daterange?startDate={date}&endDate={date}` | Get lab test data by date range |
 | GET | `/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}` | Get lab test data with flexible filters |
 
@@ -48,7 +49,9 @@ A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQ
 ### Stored Procedures
 
 1. **`GetLabTestDataWithJoins`** - Retrieves comprehensive lab test data with all joins
-2. **`GetPatientLabTestData`** - **NEW** - Retrieves lab test data for a specific patient ID
+2. **`GetPatientLabTestData`** - Retrieves lab test data for a specific patient ID (returns multiple datasets)
+3. **`GetPatientnameforLAB`** - Retrieves patient information including ethnicity
+4. **`Usp_GetPatientGroupLabData_Priority`** - **NEW** - Retrieves patient lab observations with optional filters
 
 ### Database Schema
 

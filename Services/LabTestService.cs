@@ -244,6 +244,9 @@ namespace LabTestApi.Services
                                     case "comments":
                                         labTestDataItem.Comments = value.ToString();
                                         break;
+                                    case "priorityid":
+                                        labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
                                 }
                             }
                             
@@ -305,7 +308,8 @@ namespace LabTestApi.Services
                     ReferenceRanges = "12.0-16.0",
                     AbnormalFlagID = 0,
                     Source = "LAB",
-                    Comments = "Normal result"
+                    Comments = "Normal result",
+                    PriorityID = 3
                 },
                 new LabTestData
                 {
@@ -333,7 +337,8 @@ namespace LabTestApi.Services
                     ReferenceRanges = "<200",
                     AbnormalFlagID = 0,
                     Source = "LAB",
-                    Comments = "Good cholesterol level"
+                    Comments = "Good cholesterol level",
+                    PriorityID = 2
                 }
             };
         }
@@ -525,6 +530,9 @@ namespace LabTestApi.Services
                                     case "comments":
                                         labTestDataItem.Comments = value.ToString();
                                         break;
+                                    case "priorityid":
+                                        labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
                                 }
                             }
                             
@@ -695,6 +703,9 @@ namespace LabTestApi.Services
                                     case "comments":
                                         labTestDataItem.Comments = value.ToString();
                                         break;
+                                    case "priorityid":
+                                        labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
                                 }
                             }
                             
@@ -863,10 +874,9 @@ namespace LabTestApi.Services
                     await connection.OpenAsync();
                     Console.WriteLine("✅ Successfully connected to database!");
                     
-                    // Try to execute the stored procedure directly
-                    Console.WriteLine("⏳ Attempting to execute GetPatientLabTestData stored procedure...");
-                    
+                    // Try the stored procedure directly to see what it returns
                     Console.WriteLine("⏳ Executing GetPatientLabTestData stored procedure...");
+                    
                     using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
                     command.Parameters.AddWithValue("@pPatientID", patientId);
                     using var reader = await command.ExecuteReaderAsync();
@@ -1014,7 +1024,7 @@ namespace LabTestApi.Services
                                 
                                 // LabTestOBXID
                                 var labTestOBXIDOrdinal = reader.GetOrdinal("LabTestOBXID");
-                                var labTestOBXIDValue = reader.IsDBNull(labTestOBXIDOrdinal) ? 0 : reader.GetInt64(labTestOBXIDOrdinal);
+                                var labTestOBXIDValue = reader.IsDBNull(labTestOBXIDOrdinal) ? 0 : reader.GetInt32(labTestOBXIDOrdinal);
                                 Console.WriteLine($"  LabTestOBXID: {labTestOBXIDValue} (Type: {reader.GetDataTypeName(labTestOBXIDOrdinal)})");
                                 
                                 // SnomedCode_2
@@ -1072,6 +1082,11 @@ namespace LabTestApi.Services
                                 var commentsValue = reader.IsDBNull(commentsOrdinal) ? null : reader.GetString(commentsOrdinal);
                                 Console.WriteLine($"  Comments: {commentsValue} (Type: {reader.GetDataTypeName(commentsOrdinal)})");
                                 
+                                // PriorityID
+                                var priorityIDOrdinal = reader.GetOrdinal("PriorityID");
+                                var priorityIDValue = reader.IsDBNull(priorityIDOrdinal) ? 0 : reader.GetInt32(priorityIDOrdinal);
+                                Console.WriteLine($"  PriorityID: {priorityIDValue} (Type: {reader.GetDataTypeName(priorityIDOrdinal)})");
+                                
                                 var detail = new PatientLabTestDetail
                                 {
                                     LabTestOBRID = labTestOBRIDValue,
@@ -1091,7 +1106,8 @@ namespace LabTestApi.Services
                                     AbnormalFlagDesc = abnormalFlagDescValue,
                                     LabTestNTEID = labTestNTEIDValue,
                                     Source = sourceValue,
-                                    Comments = commentsValue
+                                    Comments = commentsValue,
+                                    PriorityID = priorityIDValue
                                 };
                                 
                                 response.LabTestDetails.Add(detail);
@@ -1105,6 +1121,8 @@ namespace LabTestApi.Services
                         
                         Console.WriteLine($"✅ Retrieved {response.LabTestDetails.Count} lab test detail records for patient {patientId}");
                     }
+                    
+                    // No fallback needed since we're using the correct query directly
                     
                     // Move to next result set (third dataset - Allergies)
                     if (await reader.NextResultAsync())
@@ -1317,7 +1335,7 @@ namespace LabTestApi.Services
                                 
                                 // Summary
                                 var summaryOrdinal = reader.GetOrdinal("Summary");
-                                var summaryValue = reader.IsDBNull(summaryOrdinal) ? null : reader.GetString(summaryOrdinal);
+                                var summaryValue = GetNullableString(reader, "Summary");
                                 Console.WriteLine($"  Summary: {summaryValue} (Type: {reader.GetDataTypeName(summaryOrdinal)})");
                                 
                                 // IsLongTerm
@@ -1337,7 +1355,7 @@ namespace LabTestApi.Services
                                 
                                 // SequenceNo
                                 var sequenceNoOrdinal = reader.GetOrdinal("SequenceNo");
-                                var sequenceNoValue = GetNullableInt32(reader, "SequenceNo");
+                                var sequenceNoValue = GetNullableByte(reader, "SequenceNo");
                                 Console.WriteLine($"  SequenceNo: {sequenceNoValue} (Type: {reader.GetDataTypeName(sequenceNoOrdinal)})");
                                 
                                 // IsActive
@@ -1352,7 +1370,7 @@ namespace LabTestApi.Services
                                 
                                 // DiagnosisType
                                 var diagnosisTypeOrdinal = reader.GetOrdinal("DiagnosisType");
-                                var diagnosisTypeValue = reader.IsDBNull(diagnosisTypeOrdinal) ? null : reader.GetString(diagnosisTypeOrdinal);
+                                var diagnosisTypeValue = GetNullableString(reader, "DiagnosisType");
                                 Console.WriteLine($"  DiagnosisType: {diagnosisTypeValue} (Type: {reader.GetDataTypeName(diagnosisTypeOrdinal)})");
                                 
                                 // IsMapped
@@ -1856,15 +1874,83 @@ namespace LabTestApi.Services
                             }
                         }
                     
-                    Console.WriteLine($"✅ Retrieved {diagnoses.Count} diagnosis records for patient {patientId}");
-                    return diagnoses;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Error getting diagnoses: {ex.Message}");
-                return new List<PatientDiagnosis>();
+                                    Console.WriteLine($"✅ Retrieved {diagnoses.Count} diagnosis records for patient {patientId}");
+                return diagnoses;
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting diagnoses: {ex.Message}");
+            return new List<PatientDiagnosis>();
+        }
     }
+
+    public async Task<List<PatientLabObservation>> GetPatientLabObservationsAsync(int patientId, string? observationText = null, int? practiceId = null)
+    {
+        var observations = new List<PatientLabObservation>();
+        
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Getting lab observations for patient {patientId}...");
+                
+                using (var command = new SqlCommand("[dbo].[Usp_GetPatientGroupLabData_Priority]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@PatientID", patientId);
+                    command.Parameters.AddWithValue("@ObservationText", observationText ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@PracticeID", practiceId ?? (object)DBNull.Value);
+                    
+                    Console.WriteLine($"📊 Executing stored procedure with parameters:");
+                    Console.WriteLine($"  PatientID: {patientId}");
+                    Console.WriteLine($"  ObservationText: {observationText ?? "NULL"}");
+                    Console.WriteLine($"  PracticeID: {practiceId?.ToString() ?? "NULL"}");
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var observation = new PatientLabObservation
+                                {
+                                    PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
+                                    ResultName = GetNullableString(reader, "ResultName"),
+                                    ObservationCodingSystem = GetNullableString(reader, "ObservationCodingSystem"),
+                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = GetNullableInt32(reader, "AbnormalFlagID"),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDesc"),
+                                    LabTestNTEID = reader.IsDBNull(reader.GetOrdinal("LabTestNTEID")) ? null : (long?)reader.GetInt32(reader.GetOrdinal("LabTestNTEID")),
+                                    Source = GetNullableString(reader, "Source"),
+                                    Comments = GetNullableString(reader, "Comments")
+                                };
+                                
+                                observations.Add(observation);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading observation data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                }
+                
+                Console.WriteLine($"✅ Retrieved {observations.Count} lab observation records for patient {patientId}");
+                return observations;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting lab observations: {ex.Message}");
+            return new List<PatientLabObservation>();
+        }
+    }
+}
 }

@@ -13,5 +13,6 @@ namespace LabTestApi.Services
         Task<PatientLabTestResponse?> GetPatientLabTestDataUpdatedAsync(long patientId);
         Task<List<PatientAllergy>> GetPatientAllergiesAsync(long patientId);
         Task<List<PatientDiagnosis>> GetPatientDiagnosesAsync(long patientId);
+        Task<List<PatientLabObservation>> GetPatientLabObservationsAsync(int patientId, string? observationText = null, int? practiceId = null);
     }
 }
