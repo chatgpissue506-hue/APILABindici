@@ -6,5 +6,6 @@ namespace LabTestApi.Models
         public List<PatientLabTestDetail> LabTestDetails { get; set; } = new List<PatientLabTestDetail>();
         public List<PatientAllergy> Allergies { get; set; } = new List<PatientAllergy>();
         public List<PatientDiagnosis> Diagnoses { get; set; } = new List<PatientDiagnosis>();
+        public List<PatientVitals> Vitals { get; set; } = new List<PatientVitals>();
     }
 } 

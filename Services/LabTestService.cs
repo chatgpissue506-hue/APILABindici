@@ -974,7 +974,7 @@ namespace LabTestApi.Services
                             var ethnicityValue = reader.IsDBNull(ethnicityOrdinal) ? null : reader.GetString(ethnicityOrdinal);
                             Console.WriteLine($"  Ethnicity: {ethnicityValue} (Type: {reader.GetDataTypeName(ethnicityOrdinal)})");
                             
-                            // Age
+                            // Age (calculated)
                             var ageOrdinal = reader.GetOrdinal("Age");
                             int? ageValue = null;
                             if (!reader.IsDBNull(ageOrdinal))
@@ -1000,6 +1000,39 @@ namespace LabTestApi.Services
                             }
                             Console.WriteLine($"  Age: {ageValue} (Type: {reader.GetDataTypeName(ageOrdinal)})");
                             
+                            // AgeFromProfile (from tp.age)
+                            int? ageFromProfileValue = null;
+                            try
+                            {
+                                var ageFromProfileOrdinal = reader.GetOrdinal("age");
+                                if (!reader.IsDBNull(ageFromProfileOrdinal))
+                                {
+                                    var dataType = reader.GetDataTypeName(ageFromProfileOrdinal).ToLower();
+                                    if (dataType == "int" || dataType == "bigint")
+                                    {
+                                        ageFromProfileValue = reader.GetInt32(ageFromProfileOrdinal);
+                                    }
+                                    else if (dataType == "decimal" || dataType == "numeric")
+                                    {
+                                        var decimalValue = reader.GetDecimal(ageFromProfileOrdinal);
+                                        ageFromProfileValue = (int)decimalValue;
+                                    }
+                                    else
+                                    {
+                                        // Try as string
+                                        if (int.TryParse(reader.GetString(ageFromProfileOrdinal), out int age))
+                                        {
+                                            ageFromProfileValue = age;
+                                        }
+                                    }
+                                }
+                                Console.WriteLine($"  AgeFromProfile: {ageFromProfileValue} (Type: {reader.GetDataTypeName(ageFromProfileOrdinal)})");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"  AgeFromProfile: Not found in result set - {ex.Message}");
+                            }
+                            
                             var header = new PatientLabTestHeader
                             {
                                 NHINumber = nhiNumberValue,
@@ -1010,7 +1043,8 @@ namespace LabTestApi.Services
                                 PracticeID = practiceIdValue,
                                 MshInsertedAt = mshInsertedAtValue,
                                 Ethnicity = ethnicityValue,
-                                Age = ageValue
+                                Age = ageValue,
+                                AgeFromProfile = ageFromProfileValue
                             };
                             
                             response.Header = header;
@@ -1069,14 +1103,32 @@ namespace LabTestApi.Services
                                 Console.WriteLine($"  ObservationDateTime: {observationDateTimeValue} (Type: {reader.GetDataTypeName(observationDateTimeOrdinal)})");
                                 
                                 // StatusChangeDateTime
-                                var statusChangeDateTimeOrdinal = reader.GetOrdinal("StatusChangeDateTime");
-                                var statusChangeDateTimeValue = reader.IsDBNull(statusChangeDateTimeOrdinal) ? DateTime.MinValue : reader.GetDateTime(statusChangeDateTimeOrdinal);
-                                Console.WriteLine($"  StatusChangeDateTime: {statusChangeDateTimeValue} (Type: {reader.GetDataTypeName(statusChangeDateTimeOrdinal)})");
+                                DateTime statusChangeDateTimeValue = DateTime.MinValue;
+                                try
+                                {
+                                    var statusChangeDateTimeOrdinal = reader.GetOrdinal("StatusChangeDateTime");
+                                    statusChangeDateTimeValue = reader.IsDBNull(statusChangeDateTimeOrdinal) ? DateTime.MinValue : reader.GetDateTime(statusChangeDateTimeOrdinal);
+                                    Console.WriteLine($"  StatusChangeDateTime: {statusChangeDateTimeValue} (Type: {reader.GetDataTypeName(statusChangeDateTimeOrdinal)})");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"  StatusChangeDateTime: Not found in result set - {ex.Message}");
+                                    statusChangeDateTimeValue = DateTime.MinValue;
+                                }
                                 
                                 // AppointmentID
-                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
-                                var appointmentIDValue = GetNullableInt32(reader, "AppointmentID")?.ToString();
-                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                string? appointmentIDValue = null;
+                                try
+                                {
+                                    var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                    appointmentIDValue = GetNullableInt32(reader, "AppointmentID")?.ToString();
+                                    Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"  AppointmentID: Not found in result set - {ex.Message}");
+                                    appointmentIDValue = null;
+                                }
                                 
                                 // LabTestOBXID
                                 var labTestOBXIDOrdinal = reader.GetOrdinal("LabTestOBXID");
@@ -1144,9 +1196,32 @@ namespace LabTestApi.Services
                                 Console.WriteLine($"  PriorityID: {priorityIDValue} (Type: {reader.GetDataTypeName(priorityIDOrdinal)})");
                                 
                                 // PanelType
-                                var panelTypeOrdinal = reader.GetOrdinal("PanelType");
-                                var panelTypeValue = reader.IsDBNull(panelTypeOrdinal) ? null : reader.GetString(panelTypeOrdinal);
-                                Console.WriteLine($"  PanelType: {panelTypeValue} (Type: {reader.GetDataTypeName(panelTypeOrdinal)})");
+                                string? panelTypeValue = null;
+                                try
+                                {
+                                    var panelTypeOrdinal = reader.GetOrdinal("PanelType");
+                                    panelTypeValue = reader.IsDBNull(panelTypeOrdinal) ? null : reader.GetString(panelTypeOrdinal);
+                                    Console.WriteLine($"  PanelType: {panelTypeValue} (Type: {reader.GetDataTypeName(panelTypeOrdinal)})");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"  PanelType: Not found in result set - {ex.Message}");
+                                    panelTypeValue = null;
+                                }
+                                
+                                // ProviderFullName
+                                string? providerFullNameValue = null;
+                                try
+                                {
+                                    var providerFullNameOrdinal = reader.GetOrdinal("ProviderFullName");
+                                    providerFullNameValue = reader.IsDBNull(providerFullNameOrdinal) ? null : reader.GetString(providerFullNameOrdinal);
+                                    Console.WriteLine($"  ProviderFullName: {providerFullNameValue} (Type: {reader.GetDataTypeName(providerFullNameOrdinal)})");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"  ProviderFullName: Not found in result set - {ex.Message}");
+                                    providerFullNameValue = null;
+                                }
                                 
                                 var detail = new PatientLabTestDetail
                                 {
@@ -1169,7 +1244,8 @@ namespace LabTestApi.Services
                                     Source = sourceValue,
                                     Comments = commentsValue,
                                     PriorityID = priorityIDValue,
-                                    PanelType = panelTypeValue
+                                    PanelType = panelTypeValue,
+                                    ProviderFullName = providerFullNameValue
                                 };
                                 
                                 response.LabTestDetails.Add(detail);
@@ -1553,8 +1629,120 @@ namespace LabTestApi.Services
                         Console.WriteLine($"⚠️ No diagnosis information found for patient {patientId}");
                     }
                     
+                    // Move to next result set (fifth dataset - Vitals)
+                    if (await reader.NextResultAsync())
+                    {
+                        Console.WriteLine("📋 Reading fifth dataset (Vitals information)...");
+                        Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                        
+                        // Print column information for fifth dataset
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
+                        
+                        int vitalsCount = 0;
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                vitalsCount++;
+                                Console.WriteLine($"🔍 Reading vitals record #{vitalsCount}:");
+                                
+                                // Read all available columns dynamically
+                                var vitals = new PatientVitals();
+                                
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    if (reader.IsDBNull(i)) continue;
+                                    
+                                    var columnName = reader.GetName(i);
+                                    var value = reader[i];
+                                    
+                                    // Map columns based on exact names from the stored procedure
+                                    switch (columnName.ToLower())
+                                    {
+                                        case "bpinsertedat":
+                                            vitals.BPInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  BPInsertedAt: {vitals.BPInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "heightinsertedat":
+                                            vitals.HeightInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  HeightInsertedAt: {vitals.HeightInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "weightinsertedat":
+                                            vitals.WeightInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  WeightInsertedAt: {vitals.WeightInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "bmiinsertedat":
+                                            vitals.BMIInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  BMIInsertedAt: {vitals.BMIInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "height":
+                                            vitals.Height = value.ToString();
+                                            Console.WriteLine($"  Height: {vitals.Height} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "bmi":
+                                            vitals.BMI = value.ToString();
+                                            Console.WriteLine($"  BMI: {vitals.BMI} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "weight":
+                                            vitals.Weight = value.ToString();
+                                            Console.WriteLine($"  Weight: {vitals.Weight} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "bpsys":
+                                            vitals.BPSys = value.ToString();
+                                            Console.WriteLine($"  BPSys: {vitals.BPSys} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "bpdia":
+                                            vitals.BPDia = value.ToString();
+                                            Console.WriteLine($"  BPDia: {vitals.BPDia} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "cvrainsertedat":
+                                            vitals.CVRAInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  CVRAInsertedAt: {vitals.CVRAInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "cvra":
+                                            vitals.CVRA = value.ToString();
+                                            Console.WriteLine($"  CVRA: {vitals.CVRA} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "nzpp":
+                                            vitals.NZPP = value.ToString();
+                                            Console.WriteLine($"  NZPP: {vitals.NZPP} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "waistcircumference":
+                                            vitals.WaistCircumference = value.ToString();
+                                            Console.WriteLine($"  WaistCircumference: {vitals.WaistCircumference} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        case "waistcircumferenceinsertedat":
+                                            vitals.WaistCircumferenceInsertedAt = Convert.ToDateTime(value);
+                                            Console.WriteLine($"  WaistCircumferenceInsertedAt: {vitals.WaistCircumferenceInsertedAt} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                        default:
+                                            Console.WriteLine($"  Unknown column: {columnName} = {value} (Type: {reader.GetDataTypeName(i)})");
+                                            break;
+                                    }
+                                }
+                                
+                                response.Vitals.Add(vitals);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading vitals data (record #{vitalsCount}): {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                                // Continue processing other records
+                            }
+                        }
+                        
+                        Console.WriteLine($"✅ Retrieved {response.Vitals.Count} vitals records for patient {patientId}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"⚠️ No vitals information found for patient {patientId}");
+                    }
+                    
                     Console.WriteLine($"✅ Retrieved complete lab test data for patient {patientId}");
-                    Console.WriteLine($"📊 Summary: Header={(response.Header != null ? "Yes" : "No")}, LabDetails={response.LabTestDetails.Count}, Allergies={response.Allergies.Count}, Diagnoses={response.Diagnoses.Count}");
+                    Console.WriteLine($"📊 Summary: Header={(response.Header != null ? "Yes" : "No")}, LabDetails={response.LabTestDetails.Count}, Allergies={response.Allergies.Count}, Diagnoses={response.Diagnoses.Count}, Vitals={response.Vitals.Count}");
                     return response;
                 }
             }
@@ -2028,19 +2216,26 @@ namespace LabTestApi.Services
                             {
                                 var observation = new PatientLabObservation
                                 {
-                                    PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                    LabTestOBRID = reader.GetInt32(reader.GetOrdinal("LabTestOBRID")),
+                                    SnomedCode = GetNullableString(reader, "SnomedCode"),
                                     MessageSubject = GetNullableString(reader, "MessageSubject"),
+                                    PanelType = GetNullableString(reader, "PanelType"),
+                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
+                                    StatusChangeDateTime = GetNullableDateTime(reader, "StatusChangeDateTime"),
+                                    AppointmentID = GetNullableInt32(reader, "AppointmentID")?.ToString(),
+                                    LabTestOBXID = reader.GetInt32(reader.GetOrdinal("LabTestOBXID")),
+                                    SnomedCode_2 = GetNullableString(reader, "SnomedCode_2"),
                                     ResultName = GetNullableString(reader, "ResultName"),
                                     ObservationCodingSystem = GetNullableString(reader, "ObservationCodingSystem"),
-                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
                                     ObservationValue = GetNullableString(reader, "ObservationValue"),
                                     Units = GetNullableString(reader, "Units"),
                                     ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
                                     AbnormalFlagID = GetNullableInt32(reader, "AbnormalFlagID"),
                                     AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDesc"),
-                                    LabTestNTEID = reader.IsDBNull(reader.GetOrdinal("LabTestNTEID")) ? null : (long?)reader.GetInt32(reader.GetOrdinal("LabTestNTEID")),
+                                    LabTestNTEID = reader.IsDBNull(reader.GetOrdinal("LabTestNTEID")) ? null : reader.GetInt32(reader.GetOrdinal("LabTestNTEID")),
                                     Source = GetNullableString(reader, "Source"),
-                                    Comments = GetNullableString(reader, "Comments")
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID"))
                                 };
                                 
                                 observations.Add(observation);

@@ -25,5 +25,6 @@ namespace LabTestApi.Models
         public int? PatientID { get; set; }
         public int? PracticeLocationID { get; set; }
         public bool IsPrimaryDiagnosis { get; set; }
+        public string? DiagnoseStatusName { get; set; }
     }
 } 
