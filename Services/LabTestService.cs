@@ -30,12 +30,25 @@ namespace LabTestApi.Services
                     return reader.GetInt32(ordinal);
                 case "bigint":
                     return (int)reader.GetInt64(ordinal);
-                default:
+                case "decimal":
+                case "numeric":
+                    var decimalValue = reader.GetDecimal(ordinal);
+                    return (int)decimalValue;
+                case "nvarchar":
+                case "varchar":
+                case "char":
+                case "nchar":
                     // Try to get as string and parse
                     var stringValue = reader.GetString(ordinal);
                     if (int.TryParse(stringValue, out int result))
                         return result;
-                    throw new InvalidCastException($"Cannot convert column '{columnName}' of type '{dataType}' to int");
+                    return null; // Return null instead of throwing exception for string fields
+                default:
+                    // Try to get as string and parse
+                    var fallbackStringValue = reader.GetString(ordinal);
+                    if (int.TryParse(fallbackStringValue, out int fallbackResult))
+                        return fallbackResult;
+                    return null; // Return null instead of throwing exception
             }
         }
 
@@ -71,12 +84,25 @@ namespace LabTestApi.Services
                     return (byte)reader.GetInt32(ordinal);
                 case "bigint":
                     return (byte)reader.GetInt64(ordinal);
-                default:
+                case "decimal":
+                case "numeric":
+                    var decimalValue = reader.GetDecimal(ordinal);
+                    return (byte)decimalValue;
+                case "nvarchar":
+                case "varchar":
+                case "char":
+                case "nchar":
                     // Try to get as string and parse
                     var stringValue = reader.GetString(ordinal);
                     if (byte.TryParse(stringValue, out byte result))
                         return result;
-                    throw new InvalidCastException($"Cannot convert column '{columnName}' of type '{dataType}' to byte");
+                    return null; // Return null instead of throwing exception for string fields
+                default:
+                    // Try to get as string and parse
+                    var fallbackStringValue = reader.GetString(ordinal);
+                    if (byte.TryParse(fallbackStringValue, out byte fallbackResult))
+                        return fallbackResult;
+                    return null; // Return null instead of throwing exception
             }
         }
 
@@ -953,9 +979,23 @@ namespace LabTestApi.Services
                             int? ageValue = null;
                             if (!reader.IsDBNull(ageOrdinal))
                             {
-                                if (int.TryParse(reader.GetString(ageOrdinal), out int age))
+                                var dataType = reader.GetDataTypeName(ageOrdinal).ToLower();
+                                if (dataType == "decimal" || dataType == "numeric")
                                 {
-                                    ageValue = age;
+                                    var decimalValue = reader.GetDecimal(ageOrdinal);
+                                    ageValue = (int)decimalValue;
+                                }
+                                else if (dataType == "int" || dataType == "bigint")
+                                {
+                                    ageValue = reader.GetInt32(ageOrdinal);
+                                }
+                                else
+                                {
+                                    // Try as string
+                                    if (int.TryParse(reader.GetString(ageOrdinal), out int age))
+                                    {
+                                        ageValue = age;
+                                    }
                                 }
                             }
                             Console.WriteLine($"  Age: {ageValue} (Type: {reader.GetDataTypeName(ageOrdinal)})");
