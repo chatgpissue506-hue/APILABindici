@@ -1143,6 +1143,11 @@ namespace LabTestApi.Services
                                 var priorityIDValue = reader.IsDBNull(priorityIDOrdinal) ? 0 : reader.GetInt32(priorityIDOrdinal);
                                 Console.WriteLine($"  PriorityID: {priorityIDValue} (Type: {reader.GetDataTypeName(priorityIDOrdinal)})");
                                 
+                                // PanelType
+                                var panelTypeOrdinal = reader.GetOrdinal("PanelType");
+                                var panelTypeValue = reader.IsDBNull(panelTypeOrdinal) ? null : reader.GetString(panelTypeOrdinal);
+                                Console.WriteLine($"  PanelType: {panelTypeValue} (Type: {reader.GetDataTypeName(panelTypeOrdinal)})");
+                                
                                 var detail = new PatientLabTestDetail
                                 {
                                     LabTestOBRID = labTestOBRIDValue,
@@ -1163,7 +1168,8 @@ namespace LabTestApi.Services
                                     LabTestNTEID = labTestNTEIDValue,
                                     Source = sourceValue,
                                     Comments = commentsValue,
-                                    PriorityID = priorityIDValue
+                                    PriorityID = priorityIDValue,
+                                    PanelType = panelTypeValue
                                 };
                                 
                                 response.LabTestDetails.Add(detail);

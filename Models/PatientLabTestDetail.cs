@@ -21,5 +21,6 @@ namespace LabTestApi.Models
         public string? Source { get; set; }
         public string? Comments { get; set; }
         public int PriorityID { get; set; }
+        public string? PanelType { get; set; }
     }
 } 
