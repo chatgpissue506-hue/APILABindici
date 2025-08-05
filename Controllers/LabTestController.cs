@@ -122,13 +122,16 @@ namespace LabTestApi.Controllers
         /// Get lab test data for a specific patient using GetPatientLabTestData stored procedure
         /// </summary>
         /// <param name="patientId">Patient ID (bigint)</param>
+        /// <param name="labTestMshID">Optional Lab Test MSH ID filter</param>
         /// <returns>Lab test data for the specified patient</returns>
         [HttpGet("patientinboxdetail/{patientId:long}")]
-        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestData(long patientId)
+        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestData(
+            long patientId,
+            [FromQuery] long? labTestMshID = null)
         {
             try
             {
-                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId);
+                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId, labTestMshID);
                 if (result == null)
                 {
                     return NotFound($"Patient lab test data for patient ID {patientId} not found");
@@ -168,13 +171,16 @@ namespace LabTestApi.Controllers
         /// Get patient lab test data using updated GetPatientLabTestData stored procedure (returns structured data)
         /// </summary>
         /// <param name="patientId">Patient ID (bigint)</param>
+        /// <param name="labTestMshID">Optional Lab Test MSH ID filter</param>
         /// <returns>Structured patient lab test data with header and details</returns>
         [HttpGet("patient-labtest-updated/{patientId:long}")]
-        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestDataUpdated(long patientId)
+        public async Task<ActionResult<PatientLabTestResponse>> GetPatientLabTestDataUpdated(
+            long patientId, 
+            [FromQuery] long? labTestMshID = null)
         {
             try
             {
-                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId);
+                var result = await _labTestService.GetPatientLabTestDataUpdatedAsync(patientId, labTestMshID);
                 if (result == null)
                 {
                     return NotFound($"Patient lab test data for patient ID {patientId} not found");

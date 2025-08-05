@@ -1,311 +1,328 @@
 # Lab Test API
 
-A comprehensive ASP.NET Core Web API for retrieving laboratory test data from SQL Server using stored procedures.
+A .NET Core Web API for retrieving lab test data from a SQL Server database using stored procedures.
 
-## 🚀 Features
+## Recent Updates (Latest)
 
-- **.NET 9.0** - Latest .NET framework version
-- **ASP.NET Core Web API** - Modern web API framework
-- **SQL Server Integration** - Direct database access using stored procedures
-- **Swagger Documentation** - Interactive API documentation
-- **Comprehensive Error Handling** - Detailed logging and error messages
-- **Flexible Filtering** - Multiple filtering options for data retrieval
+### Updated Stored Procedure Support
 
-## �� API Endpoints
+The API has been updated to support the enhanced `GetPatientLabTestData` stored procedure with the following improvements:
 
-### Lab Test Data Endpoints
+#### New Features Added:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/labtest` | Get all lab test data |
-| GET | `/api/labtest/patient/{patientId}` | Get lab test data by patient ID (string) |
-| GET | `/api/labtest/patient-sp/{patientId:long}` | Get lab test data by patient ID using GetPatientLabTestData SP (bigint) |
-| GET | `/api/labtest/patient-labtest-updated/{patientId:long}` | Get structured lab test data using updated GetPatientLabTestData SP (header + details) |
-| GET | `/api/labtest/patient-allergies/{patientId:long}` | Get patient allergies |
-| GET | `/api/labtest/patient-diagnoses/{patientId:long}` | Get patient diagnoses |
-| GET | `/api/labtest/patient-info/{patientId:long}` | Get patient information using GetPatientnameforLAB SP (includes ethnicity) |
-| GET | `/api/labtest/patient-observations/{patientId:int}?observationText={text}&practiceId={id}` | Get patient lab observations with optional filters |
-| GET | `/api/labtest/daterange?startDate={date}&endDate={date}` | Get lab test data by date range |
-| GET | `/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}` | Get lab test data with flexible filters |
+1. **Enhanced Parameter Support**
+   - Added optional `labTestMshID` parameter to filter by specific lab test
+   - Both parameters are now supported: `@pPatientID` and `@pLabTestMshID`
 
-### External API Integration Endpoints
+2. **New Data Fields**
+   - **Header Information**: Added `Ethnicity` and `Age` fields
+   - **Lab Test Details**: Added `AbnormalFlagDesc` and `PriorityID` fields
+   - **Allergies**: Completely restructured with new fields including:
+     - `AllergyUUID`, `IsReviewed`, `MedTechID`
+     - `MedicineShortName`, `MedicineClassification`, `FavouriteSubstance`
+     - `DiseaseName`, `SubstanceTypeId`, `Other`
+     - `FullName`, `InsertedAt`, `AllergyType`, `Name`
+     - `IsNKA`, `SequenceNo`, `Severity`
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/externalapi/diagnosis/search?query={term}` | Search ICD-10 diagnosis codes using NIH Clinical Tables API |
-| GET | `/api/externalapi/medication/search?search={term}` | Search medications using RxNav API |
-| GET | `/api/externalapi/info` | Get information about available external APIs |
+3. **Enhanced Error Handling**
+   - Comprehensive try-catch blocks for each dataset
+   - Detailed logging for debugging
+   - Graceful handling of missing data
+   - SQL-specific exception handling
+   - Command timeout protection (5 minutes)
 
-### Documentation Endpoints
+4. **Improved Data Processing**
+   - Record-level error handling (continues processing other records)
+   - Detailed logging for each field and data type
+   - Summary reporting of retrieved data counts
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api-docs` | API documentation in JSON format |
-| GET | `/swagger` | Swagger UI for interactive API testing |
-| GET | `/` | HTML documentation page |
+#### API Endpoints Updated:
 
-## 🗄️ Database Integration
+- `GET /api/labtest/patientinboxdetail/{patientId}?labTestMshID={optional}`
+- `GET /api/labtest/patient-labtest-updated/{patientId}?labTestMshID={optional}`
 
-### Stored Procedures
+#### Model Changes:
 
-1. **`GetLabTestDataWithJoins`** - Retrieves comprehensive lab test data with all joins
-2. **`GetPatientLabTestData`** - Retrieves lab test data for a specific patient ID (returns multiple datasets)
-3. **`GetPatientnameforLAB`** - Retrieves patient information including ethnicity
-4. **`Usp_GetPatientGroupLabData_Priority`** - **NEW** - Retrieves patient lab observations with optional filters
-
-### Database Schema
-
-The API connects to SQL Server database `PMS_NZ_V2` and accesses tables in the `appointment` schema:
-
-- `tbllabtest_msh` - Message header information
-- `tbllabtest_obr` - Observation request information  
-- `tbllabtest_obx` - Observation results
-- `tbllabtest_nte` - Notes and comments
-
-## 🛠️ Technology Stack
-
-- **Framework**: .NET 9.0
-- **Web API**: ASP.NET Core Web API
-- **Database**: SQL Server 2019
-- **Data Access**: ADO.NET (System.Data.SqlClient)
-- **Documentation**: Swagger/OpenAPI
-- **Language**: C#
-
-## 📦 NuGet Packages
-
-```xml
-<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
-<PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+**PatientAllergy.cs** - Completely restructured with new fields:
+```csharp
+public class PatientAllergy
+{
+    public int AllergyID { get; set; }
+    public string? AllergyUUID { get; set; }
+    public bool IsReviewed { get; set; }
+    public int? MedTechID { get; set; }
+    public DateTime? OnsetDate { get; set; }
+    public int? AllergyTypeID { get; set; }
+    public int? MedicineTypeID { get; set; }
+    public string? MedicineShortName { get; set; }
+    public string? MedicineClassification { get; set; }
+    public string? FavouriteSubstance { get; set; }
+    public string? DiseaseName { get; set; }
+    public int? SubstanceTypeId { get; set; }
+    public string? Other { get; set; }
+    public string? Reaction { get; set; }
+    public bool IsActive { get; set; }
+    public string? FullName { get; set; }
+    public string? Comment { get; set; }
+    public bool IsHighlight { get; set; }
+    public DateTime? InsertedAt { get; set; }
+    public string? AllergyType { get; set; }
+    public string? Name { get; set; }
+    public bool IsNKA { get; set; }
+    public int? SequenceNo { get; set; }
+    public string? Severity { get; set; }
+}
 ```
 
-## 🚀 Getting Started
+## Features
 
-### Prerequisites
+- **Database Integration**: Connects to SQL Server database using stored procedures
+- **Structured Data**: Returns organized patient lab test data with header, details, allergies, and diagnoses
+- **Error Handling**: Comprehensive exception handling with detailed logging
+- **Flexible Filtering**: Support for patient ID and lab test MSH ID filtering
+- **CORS Support**: Configured for cross-origin requests
+- **Async Operations**: All database operations are asynchronous
 
-- .NET 9.0 SDK
-- SQL Server 2019 or later
-- Access to the target database
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/chatgpissue506-hue/APILABindici.git
-   cd APILABindici
-   ```
-
-2. **Configure connection string**
-   Update `appsettings.json` with your database connection:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Data Source=your-server;Initial Catalog=your-database;User ID=your-user;Password=your-password;TrustServerCertificate=True;"
-     }
-   }
-   ```
-
-3. **Restore packages**
-   ```bash
-   dotnet restore
-   ```
-
-4. **Run the application**
-   ```bash
-   dotnet run
-   ```
-
-5. **Access the API**
-   - API Base URL: `http://localhost:5050`
-   - Swagger UI: `http://localhost:5050/swagger`
-   - HTML Documentation: `http://localhost:5050`
-
-## 📊 Data Model
-
-The API returns `LabTestData` objects containing:
-
-- **Patient Information**: NHI Number, Full Name, DOB, Gender
-- **Test Information**: Test codes, descriptions, observation values
-- **Timestamps**: Message datetime, observation datetime, status changes
-- **Results**: Values, units, reference ranges, abnormal flags
-- **Metadata**: Source, comments, practice information
-
-## 🔧 Configuration
+## Configuration
 
 ### Connection String
-
-The application uses the connection string from `appsettings.json`:
+Update the connection string in `appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Data Source=dbserver-local;Initial Catalog=PMS_NZ_V2;User ID=pms_nz;Password=pms@@nz;TrustServerCertificate=True;Connection Timeout=120;"
+    "DefaultConnection": "Data Source=your-server;Initial Catalog=your-database;User ID=your-user;Password=your-password;TrustServerCertificate=True;Connection Timeout=120;"
   }
 }
 ```
 
-### CORS Configuration
+### CORS Settings
+Configure CORS origins in `appsettings.json`:
 
-The API supports Cross-Origin Resource Sharing (CORS) with different policies for development and production:
-
-#### Development Environment
-- **Policy**: `AllowAll`
-- **Allows**: Any origin, method, and header
-- **Use Case**: Local development and testing
-
-#### Production Environment
-- **Policy**: `Restricted`
-- **Configuration**: Uses settings from `appsettings.json`
-- **Customizable**: Origins, methods, and headers can be configured
-
-#### CORS Settings in appsettings.json
 ```json
 {
   "Cors": {
     "AllowedOrigins": [
       "http://localhost:3000",
       "http://localhost:4200",
-      "http://localhost:8080",
       "https://yourdomain.com"
-    ],
-    "AllowedMethods": [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "OPTIONS"
-    ],
-    "AllowedHeaders": [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With"
     ]
   }
 }
 ```
 
-### Environment-Specific Settings
+## API Endpoints
 
-- `appsettings.json` - Production settings
-- `appsettings.Development.json` - Development settings
-
-## 🧪 Testing
-
-### Using HTTP Client
-
-The project includes `LabTestApi.http` for testing endpoints:
-
-```http
-### Get all lab test data
-GET http://localhost:5050/api/labtest
-
-### Get lab test data by patient ID (string)
-GET http://localhost:5050/api/labtest/patient/P001
-
-### Get lab test data by patient ID (bigint) - NEW ENDPOINT
-GET http://localhost:5050/api/labtest/patient/46359
-
-### Get lab test data by date range
-GET http://localhost:5050/api/labtest/daterange?startDate=2024-01-01&endDate=2024-12-31
-
-### Get lab test data with filters
-GET http://localhost:5050/api/labtest/filter?patientId=P001&startDate=2024-01-01&endDate=2024-12-31&practiceId=PRACTICE001
+### Get All Lab Test Data
+```
+GET /api/labtest
 ```
 
-### Using Swagger UI
+### Get Lab Test Data by Patient
+```
+GET /api/labtest/patient/{patientId}
+```
 
-1. Navigate to `http://localhost:5050/swagger`
-2. Select an endpoint
-3. Click "Try it out"
-4. Enter parameters
-5. Click "Execute"
+### Get Lab Test Data by Date Range
+```
+GET /api/labtest/daterange?startDate={date}&endDate={date}
+```
 
-## 🔍 Troubleshooting
+### Get Lab Test Data with Filters
+```
+GET /api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}
+```
+
+### Get Patient Lab Test Data (Updated)
+```
+GET /api/labtest/patientinboxdetail/{patientId}?labTestMshID={optional}
+GET /api/labtest/patient-labtest-updated/{patientId}?labTestMshID={optional}
+```
+
+### Get Patient Information
+```
+GET /api/labtest/patient-info/{patientId}
+```
+
+### Get Patient Allergies
+```
+GET /api/labtest/patient-allergies/{patientId}
+```
+
+### Get Patient Diagnoses
+```
+GET /api/labtest/patient-diagnoses/{patientId}
+```
+
+### Get Patient Lab Observations
+```
+GET /api/labtest/patient-observations/{patientId}?observationText={optional}&practiceId={optional}
+```
+
+## Response Structure
+
+The main endpoint returns a structured response with four sections:
+
+```json
+{
+  "header": {
+    "nhiNumber": "string",
+    "fullName": "string",
+    "dob": "date",
+    "genderName": "string",
+    "patientID": "string",
+    "practiceID": "string",
+    "mshInsertedAt": "date",
+    "ethnicity": "string",
+    "age": "number"
+  },
+  "labTestDetails": [
+    {
+      "labTestOBRID": "number",
+      "snomedCode": "string",
+      "messageSubject": "string",
+      "observationDateTime": "date",
+      "statusChangeDateTime": "date",
+      "appointmentID": "string",
+      "labTestOBXID": "number",
+      "snomedCode_2": "string",
+      "resultName": "string",
+      "observationCodingSystem": "string",
+      "observationValue": "string",
+      "units": "string",
+      "referenceRanges": "string",
+      "abnormalFlagID": "number",
+      "abnormalFlagDesc": "string",
+      "labTestNTEID": "number",
+      "source": "string",
+      "comments": "string",
+      "priorityID": "number"
+    }
+  ],
+  "allergies": [
+    {
+      "allergyID": "number",
+      "allergyUUID": "string",
+      "isReviewed": "boolean",
+      "medTechID": "number",
+      "onsetDate": "date",
+      "allergyTypeID": "number",
+      "medicineTypeID": "number",
+      "medicineShortName": "string",
+      "medicineClassification": "string",
+      "favouriteSubstance": "string",
+      "diseaseName": "string",
+      "substanceTypeId": "number",
+      "other": "string",
+      "reaction": "string",
+      "isActive": "boolean",
+      "fullName": "string",
+      "comment": "string",
+      "isHighlight": "boolean",
+      "insertedAt": "date",
+      "allergyType": "string",
+      "name": "string",
+      "isNKA": "boolean",
+      "sequenceNo": "number",
+      "severity": "string"
+    }
+  ],
+  "diagnoses": [
+    {
+      "diagnosisID": "number",
+      "appointmentID": "number",
+      "diseaseName": "string",
+      "diagnosisDate": "date",
+      "diagnosisBy": "string",
+      "summary": "string",
+      "isLongTerm": "boolean",
+      "addtoProblem": "boolean",
+      "isHighlighted": "boolean",
+      "sequenceNo": "number",
+      "isActive": "boolean",
+      "isConfidential": "boolean",
+      "diagnosisType": "string",
+      "isMapped": "boolean",
+      "practiceID": "number",
+      "onSetDate": "date",
+      "mappedBy": "string",
+      "mappedDate": "date",
+      "isStopped": "boolean",
+      "snomedDiseaseName": "string",
+      "patientID": "number",
+      "practiceLocationID": "number",
+      "isPrimaryDiagnosis": "boolean"
+    }
+  ]
+}
+```
+
+## Error Handling
+
+The API includes comprehensive error handling:
+
+- **Database Connection Errors**: Detailed logging with connection string information
+- **SQL Exceptions**: Specific handling for SQL Server errors
+- **Data Processing Errors**: Record-level error handling that continues processing
+- **Missing Data**: Graceful handling of null values and missing datasets
+- **Timeout Protection**: 5-minute command timeout to prevent long-running queries
+
+## Logging
+
+The API provides detailed console logging for debugging:
+
+- Connection status and database version
+- Column information for each dataset
+- Field-by-field data reading with data types
+- Error details with stack traces
+- Summary statistics of retrieved data
+
+## Development
+
+### Prerequisites
+- .NET 6.0 or later
+- SQL Server database with the required stored procedures
+- Valid database connection string
+
+### Running the Application
+```bash
+dotnet run
+```
+
+The API will be available at `https://localhost:7001` (or the configured port).
+
+### Testing
+Use the provided `LabTestApi.http` file for testing endpoints with sample data.
+
+## Troubleshooting
 
 ### Common Issues
 
-1. **Connection Failed**
-   - Verify SQL Server is running
-   - Check connection string parameters
-   - Ensure network connectivity
+1. **Database Connection Failed**
+   - Verify the connection string in `appsettings.json`
+   - Check if the database server is accessible
+   - Ensure the database user has proper permissions
 
 2. **Stored Procedure Not Found**
-   - Verify stored procedures exist in the database
-   - Check user permissions
+   - Verify the stored procedure exists in the database
+   - Check the procedure name and parameters
 
-3. **Data Type Mismatch**
-   - The API includes comprehensive error handling
-   - Check console logs for detailed error messages
+3. **Data Type Conversion Errors**
+   - Check the console logs for detailed field information
+   - Verify the stored procedure returns the expected data types
 
-### Logging
+4. **Timeout Issues**
+   - The API includes a 5-minute timeout for database operations
+   - Check if the stored procedure is optimized for performance
 
-The application provides detailed console logging:
-- Connection status
-- SQL Server version
-- Stored procedure existence
-- Data retrieval statistics
-- Error details with troubleshooting tips
+### Debug Information
 
-## 📈 Performance
+The API provides extensive console logging that includes:
+- Database connection status
+- Stored procedure execution details
+- Column information and data types
+- Field-by-field data reading
+- Error details with stack traces
+- Summary statistics
 
-- **Connection Pooling**: Automatic connection management
-- **Async Operations**: Non-blocking database operations
-- **Error Handling**: Graceful fallback to mock data
-- **Logging**: Detailed performance and error tracking
-
-## 🔒 Security
-
-- **Connection String Security**: Database authentication
-- **HTTPS Redirection**: Secure communication (when configured)
-- **Input Validation**: Parameter validation and sanitization
-- **Error Handling**: Secure error messages without exposing sensitive data
-
-## 📝 License
-
-This project is part of the APILABindici repository.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
----
-
-**Repository**: [https://github.com/chatgpissue506-hue/APILABindici](https://github.com/chatgpissue506-hue/APILABindici)
-
-## 🔗 External API Sources
-
-### ICD-10 Diagnosis Search
-- **Source**: [NIH Clinical Tables API](https://clinicaltables.nlm.nih.gov/api/icd10cm/v3/search)
-- **Endpoint**: `GET /api/externalapi/diagnosis/search?query={term}`
-- **Description**: Search for ICD-10 diagnosis codes and names
-- **Example**: `GET /api/externalapi/diagnosis/search?query=diabetes`
-
-### Medication Search
-- **Source**: [RxNav API](https://rxnav.nlm.nih.gov/REST/drugs.json)
-- **Endpoint**: `GET /api/externalapi/medication/search?search={term}`
-- **Description**: Search for medications and drug information
-- **Example**: `GET /api/externalapi/medication/search?search=aspirin`
-
-## 📋 Example Usage
-
-### Search for Diabetes Diagnosis
-```bash
-curl -X GET "http://localhost:5050/api/externalapi/diagnosis/search?query=diabetes" \
-  -H "Accept: application/json"
-```
-
-### Search for Aspirin Medication
-```bash
-curl -X GET "http://localhost:5050/api/externalapi/medication/search?search=aspirin" \
-  -H "Accept: application/json"
-```
-
-### Get External API Information
-```bash
-curl -X GET "http://localhost:5050/api/externalapi/info" \
-  -H "Accept: application/json"
-```
+Check the console output for detailed debugging information.
