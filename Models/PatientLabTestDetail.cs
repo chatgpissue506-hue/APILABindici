@@ -23,5 +23,6 @@ namespace LabTestApi.Models
         public string? Comments { get; set; }
         public int PriorityID { get; set; }
         public string? ProviderFullName { get; set; }
+        public string? PatientFullAddress { get; set; }
     }
 } 

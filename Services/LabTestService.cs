@@ -1223,6 +1223,20 @@ namespace LabTestApi.Services
                                     providerFullNameValue = null;
                                 }
                                 
+                                // PatientFullAddress
+                                string? patientFullAddressValue = null;
+                                try
+                                {
+                                    var patientFullAddressOrdinal = reader.GetOrdinal("PatientFullAddress");
+                                    patientFullAddressValue = reader.IsDBNull(patientFullAddressOrdinal) ? null : reader.GetString(patientFullAddressOrdinal);
+                                    Console.WriteLine($"  PatientFullAddress: {patientFullAddressValue} (Type: {reader.GetDataTypeName(patientFullAddressOrdinal)})");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"  PatientFullAddress: Not found in result set - {ex.Message}");
+                                    patientFullAddressValue = null;
+                                }
+                                
                                 var detail = new PatientLabTestDetail
                                 {
                                     LabTestOBRID = labTestOBRIDValue,
@@ -1245,7 +1259,8 @@ namespace LabTestApi.Services
                                     Comments = commentsValue,
                                     PriorityID = priorityIDValue,
                                     PanelType = panelTypeValue,
-                                    ProviderFullName = providerFullNameValue
+                                    ProviderFullName = providerFullNameValue,
+                                    PatientFullAddress = patientFullAddressValue
                                 };
                                 
                                 response.LabTestDetails.Add(detail);
@@ -1609,7 +1624,8 @@ namespace LabTestApi.Services
                                     SnomedDiseaseName = snomedDiseaseNameValue,
                                     PatientID = patientIDValue,
                                     PracticeLocationID = practiceLocationIDValue,
-                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue
+                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue,
+                                    DiagnoseStatusName = diagnoseStatusNameValue
                                 };
                                 
                                 response.Diagnoses.Add(diagnosis);
