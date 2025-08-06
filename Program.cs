@@ -99,6 +99,8 @@ app.MapGet("/api-docs", () => new
         new { method = "GET", path = "/api/labtest/patient-info/{patientId:long}", description = "Get patient information using GetPatientnameforLAB SP (includes ethnicity)" },
         new { method = "GET", path = "/api/labtest/daterange?startDate={date}&endDate={date}", description = "Get lab test data by date range" },
         new { method = "GET", path = "/api/labtest/filter?patientId={id}&startDate={date}&endDate={date}&practiceId={id}", description = "Get lab test data with flexible filters" },
+        new { method = "GET", path = "/api/labtest/patient-observation-history/{patientId}?startDate={optional}&endDate={optional}&panelTypeFilter={optional}", description = "Get patient lab observation history by name with optional filters" },
+        new { method = "GET", path = "/api/labtest/patient-medications/{patientId}?practiceId={optional}&practiceLocationId={optional}&pageNo={optional}&pageSize={optional}", description = "Get patient medication details with optional filters" },
         new { method = "GET", path = "/api/externalapi/diagnosis/search?query={term}", description = "Search ICD-10 diagnosis codes using NIH API" },
         new { method = "GET", path = "/api/externalapi/medication/search?search={term}", description = "Search medications using RxNav API" },
         new { method = "GET", path = "/api/externalapi/info", description = "Get information about external APIs" }

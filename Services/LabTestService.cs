@@ -59,11 +59,60 @@ namespace LabTestApi.Services
             return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
         }
 
-        // Helper method to safely get nullable string from reader
         private string? GetNullableString(SqlDataReader reader, string columnName)
         {
-            var ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            try
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error reading column '{columnName}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private string? GetNullableStringSafe(SqlDataReader reader, string columnName)
+        {
+            try
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                var value = reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+                
+                // Special handling for MedicationCategory - return 'Low' if null or not found
+                if (columnName == "MedicationCategory" && string.IsNullOrEmpty(value))
+                {
+                    return "Low";
+                }
+                
+                return value;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Column doesn't exist in the result set
+                Console.WriteLine($"⚠️ Column '{columnName}' not found in result set, using null");
+                
+                // Special handling for MedicationCategory - return 'Low' if column not found
+                if (columnName == "MedicationCategory")
+                {
+                    return "Low";
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error reading column '{columnName}': {ex.Message}");
+                
+                // Special handling for MedicationCategory - return 'Low' on error
+                if (columnName == "MedicationCategory")
+                {
+                    return "Low";
+                }
+                
+                return null;
+            }
         }
 
         // Helper method to safely get nullable byte from reader
@@ -1297,8 +1346,7 @@ namespace LabTestApi.Services
                         {
                             try
                             {
-                                allergyCount++;
-                                Console.WriteLine($"🔍 Reading allergy record #{allergyCount}:");
+                                Console.WriteLine("🔍 Reading allergy record #{allergyCount}:");
                                 
                                 // AllergyID
                                 var allergyIDOrdinal = reader.GetOrdinal("AllergyID");
@@ -1482,8 +1530,7 @@ namespace LabTestApi.Services
                         {
                             try
                             {
-                                diagnosisCount++;
-                                Console.WriteLine($"🔍 Reading diagnosis record #{diagnosisCount}:");
+                                Console.WriteLine("🔍 Reading diagnosis record #{diagnosisCount}:");
                                 
                                 // DiagnosisID
                                 var diagnosisIDOrdinal = reader.GetOrdinal("DiagnosisID");
@@ -1600,9 +1647,6 @@ namespace LabTestApi.Services
                                 var isPrimaryDiagnosisValue = reader.IsDBNull(isPrimaryDiagnosisOrdinal) ? false : reader.GetBoolean(isPrimaryDiagnosisOrdinal);
                                 Console.WriteLine($"  IsPrimaryDiagnosis: {isPrimaryDiagnosisValue} (Type: {reader.GetDataTypeName(isPrimaryDiagnosisOrdinal)})");
                                 
-                                // Initialize DiagnoseStatusName (will be set to null if not found)
-                                string? diagnoseStatusNameValue = null;
-                                
                                 var diagnosis = new PatientDiagnosis
                                 {
                                     DiagnosisID = diagnosisIDValue,
@@ -1627,17 +1671,15 @@ namespace LabTestApi.Services
                                     SnomedDiseaseName = snomedDiseaseNameValue,
                                     PatientID = patientIDValue,
                                     PracticeLocationID = practiceLocationIDValue,
-                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue,
-                                    DiagnoseStatusName = diagnoseStatusNameValue
+                                    IsPrimaryDiagnosis = isPrimaryDiagnosisValue
                                 };
                                 
                                 response.Diagnoses.Add(diagnosis);
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine($"❌ Error reading diagnosis data (record #{diagnosisCount}): {ex.Message}");
+                                Console.WriteLine($"❌ Error reading diagnosis data: {ex.Message}");
                                 Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
-                                // Continue processing other records
                             }
                         }
                         
@@ -2054,7 +2096,7 @@ namespace LabTestApi.Services
                                 
                                 // DiseaseName
                                 var diseaseNameOrdinal = reader.GetOrdinal("DiseaseName");
-                                var diseaseNameValue = reader.IsDBNull(diseaseNameOrdinal) ? null : reader.GetString(diseaseNameOrdinal);
+                                var diseaseNameValue = GetNullableString(reader, "DiseaseName");
                                 Console.WriteLine($"  DiseaseName: {diseaseNameValue} (Type: {reader.GetDataTypeName(diseaseNameOrdinal)})");
                                 
                                 // DiagnosisDate
@@ -2064,12 +2106,12 @@ namespace LabTestApi.Services
                                 
                                 // DiagnosisBy
                                 var diagnosisByOrdinal = reader.GetOrdinal("DiagnosisBy");
-                                var diagnosisByValue = reader.IsDBNull(diagnosisByOrdinal) ? null : reader.GetInt32(diagnosisByOrdinal).ToString();
+                                var diagnosisByValue = GetNullableInt32(reader, "DiagnosisBy")?.ToString();
                                 Console.WriteLine($"  DiagnosisBy: {diagnosisByValue} (Type: {reader.GetDataTypeName(diagnosisByOrdinal)})");
                                 
                                 // Summary
                                 var summaryOrdinal = reader.GetOrdinal("Summary");
-                                var summaryValue = reader.IsDBNull(summaryOrdinal) ? null : reader.GetString(summaryOrdinal);
+                                var summaryValue = GetNullableString(reader, "Summary");
                                 Console.WriteLine($"  Summary: {summaryValue} (Type: {reader.GetDataTypeName(summaryOrdinal)})");
                                 
                                 // IsLongTerm
@@ -2104,7 +2146,7 @@ namespace LabTestApi.Services
                                 
                                 // DiagnosisType
                                 var diagnosisTypeOrdinal = reader.GetOrdinal("DiagnosisType");
-                                var diagnosisTypeValue = reader.IsDBNull(diagnosisTypeOrdinal) ? null : reader.GetString(diagnosisTypeOrdinal);
+                                var diagnosisTypeValue = GetNullableString(reader, "DiagnosisType");
                                 Console.WriteLine($"  DiagnosisType: {diagnosisTypeValue} (Type: {reader.GetDataTypeName(diagnosisTypeOrdinal)})");
                                 
                                 // IsMapped
@@ -2355,6 +2397,79 @@ namespace LabTestApi.Services
         {
             Console.WriteLine($"❌ Error getting lab observation history: {ex.Message}");
             return new List<PatientLabObservationHistory>();
+        }
+    }
+
+    public async Task<List<PatientMedication>> GetPatientMedicationDetailsAsync(int patientId, int practiceId = 127, int practiceLocationId = 4, int pageNo = 1, int pageSize = 20)
+    {
+        var medications = new List<PatientMedication>();
+        
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Getting medication details for patient {patientId}...");
+                
+                using (var command = new SqlCommand("[inboxAI].[uspGetMedicationDetailByPatientID]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@pPracticeID", practiceId);
+                    command.Parameters.AddWithValue("@pPracticeLocationID", practiceLocationId);
+                    command.Parameters.AddWithValue("@pPatientID", patientId);
+                    command.Parameters.AddWithValue("@pPageNo", pageNo);
+                    command.Parameters.AddWithValue("@pPageSize", pageSize);
+                    
+                    Console.WriteLine($"📊 Executing stored procedure with parameters:");
+                    Console.WriteLine($"  PatientID: {patientId}");
+                    Console.WriteLine($"  PracticeID: {practiceId}");
+                    Console.WriteLine($"  PracticeLocationID: {practiceLocationId}");
+                    Console.WriteLine($"  PageNo: {pageNo}");
+                    Console.WriteLine($"  PageSize: {pageSize}");
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var medication = new PatientMedication
+                                {
+                                    PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
+                                    MedicationID = reader.GetInt32(reader.GetOrdinal("MedicationID")),
+                                    LastRXDate = GetNullableDateTime(reader, "LastRXDate"),
+                                    StartDate = GetNullableDateTime(reader, "StartDate"),
+                                    ProviderName = GetNullableString(reader, "ProviderName"),
+                                    MedicineName = GetNullableString(reader, "MedicineName"),
+                                    Take = GetNullableString(reader, "Take"),
+                                    FrequencyID = GetNullableInt32(reader, "FrequencyID"),
+                                    RouteID = GetNullableInt32(reader, "RouteID"),
+                                    Quantity = GetNullableInt32(reader, "Quantity"),
+                                    Duration = GetNullableInt32(reader, "Duration"),
+                                    DurationType = GetNullableString(reader, "DurationType"),
+                                    Directions = GetNullableString(reader, "Directions"),
+                                    MedicationCategory = GetNullableStringSafe(reader, "MedicationCategory")
+                                };
+                                
+                                medications.Add(medication);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading medication data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                }
+                
+                Console.WriteLine($"✅ Retrieved {medications.Count} medication records for patient {patientId}");
+                return medications;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting medication details: {ex.Message}");
+            return new List<PatientMedication>();
         }
     }
 }

@@ -143,3 +143,29 @@ GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776?s
 Accept: application/json
 
 ###
+
+### Test Patient Medication Details
+
+### Get all medication details for a patient
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-medications/1771935
+Accept: application/json
+
+###
+
+### Get medication details with custom practice settings
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-medications/1771935?practiceId=127&practiceLocationId=4
+Accept: application/json
+
+###
+
+### Get medication details with pagination
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-medications/1771935?pageNo=1&pageSize=10
+Accept: application/json
+
+###
+
+### Get medication details with all parameters
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-medications/1771935?practiceId=127&practiceLocationId=4&pageNo=1&pageSize=20
+Accept: application/json
+
+###

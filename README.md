@@ -215,6 +215,60 @@ GET /api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDat
 ]
 ```
 
+### Get Patient Medication Details
+```
+GET /api/labtest/patient-medications/{patientId}?practiceId={optional}&practiceLocationId={optional}&pageNo={optional}&pageSize={optional}
+```
+
+**Parameters:**
+- `patientId` (int): Patient ID (required)
+- `practiceId` (int, optional): Practice ID (default: 127)
+- `practiceLocationId` (int, optional): Practice Location ID (default: 4)
+- `pageNo` (int, optional): Page number (default: 1)
+- `pageSize` (int, optional): Page size (default: 20)
+
+**Examples:**
+```
+# Get all medication details for a patient
+GET /api/labtest/patient-medications/1771935
+
+# Get medication details with custom practice settings
+GET /api/labtest/patient-medications/1771935?practiceId=127&practiceLocationId=4
+
+# Get medication details with pagination
+GET /api/labtest/patient-medications/1771935?pageNo=1&pageSize=10
+
+# Get medication details with all parameters
+GET /api/labtest/patient-medications/1771935?practiceId=127&practiceLocationId=4&pageNo=1&pageSize=20
+```
+
+**Response Structure:**
+```json
+[
+  {
+    "patientID": "number",
+    "medicationID": "number",
+    "lastRXDate": "date",
+    "startDate": "date",
+    "providerName": "string",
+    "medicineName": "string",
+    "take": "string",
+    "frequencyID": "number",
+    "routeID": "number",
+    "quantity": "number",
+    "duration": "number",
+    "durationType": "string",
+    "directions": "string",
+    "medicationCategory": "string"
+  }
+]
+```
+
+**Medication Categories:**
+- **CM**: Current Medications - Active medications prescribed today
+- **SM**: Short Term Medications - Medications prescribed within the last 91 days (not long-term)
+- **LM**: Long Term Medications - Medications marked as long-term and not stopped
+
 ## Response Structure
 
 The main endpoint returns a structured response with four sections:

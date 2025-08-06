@@ -280,5 +280,33 @@ namespace LabTestApi.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Get patient medication details with optional filters
+        /// </summary>
+        /// <param name="patientId">Patient ID (int)</param>
+        /// <param name="practiceId">Practice ID (optional, default: 127)</param>
+        /// <param name="practiceLocationId">Practice Location ID (optional, default: 4)</param>
+        /// <param name="pageNo">Page number (optional, default: 1)</param>
+        /// <param name="pageSize">Page size (optional, default: 20)</param>
+        /// <returns>List of patient medication details</returns>
+        [HttpGet("patient-medications/{patientId:int}")]
+        public async Task<ActionResult<List<PatientMedication>>> GetPatientMedicationDetails(
+            int patientId,
+            [FromQuery] int practiceId = 127,
+            [FromQuery] int practiceLocationId = 4,
+            [FromQuery] int pageNo = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var result = await _labTestService.GetPatientMedicationDetailsAsync(patientId, practiceId, practiceLocationId, pageNo, pageSize);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
