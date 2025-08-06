@@ -111,3 +111,35 @@ GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359?observatio
 Accept: application/json
 
 ###
+
+### Test Patient Lab Observation History by Name
+
+### Get all lab observation history for a patient
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776
+Accept: application/json
+
+###
+
+### Get CBC lab results for a patient
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776?panelTypeFilter=CBC
+Accept: application/json
+
+###
+
+### Get Hemoglobin panel results between dates
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDate=2024-12-31
+Accept: application/json
+
+###
+
+### Get Hemoglobin panel results between dates with panel filter
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDate=2024-12-31&panelTypeFilter=Hemoglobin
+Accept: application/json
+
+###
+
+### Get lab results for a specific date range only
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-observation-history/2450776?startDate=2024-06-01&endDate=2024-06-30
+Accept: application/json
+
+###

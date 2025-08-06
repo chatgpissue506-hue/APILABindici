@@ -159,6 +159,62 @@ GET /api/labtest/patient-diagnoses/{patientId}
 GET /api/labtest/patient-observations/{patientId}?observationText={optional}&practiceId={optional}
 ```
 
+### Get Patient Lab Observation History by Name
+```
+GET /api/labtest/patient-observation-history/{patientId}?startDate={optional}&endDate={optional}&panelTypeFilter={optional}
+```
+
+**Parameters:**
+- `patientId` (int): Patient ID (required)
+- `startDate` (DateTime, optional): Start date for filtering results
+- `endDate` (DateTime, optional): End date for filtering results  
+- `panelTypeFilter` (string, optional): Panel type filter (e.g., 'CBC', 'Hemoglobin')
+
+**Examples:**
+```
+# Get all lab observation history for a patient
+GET /api/labtest/patient-observation-history/2450776
+
+# Get CBC lab results for a patient
+GET /api/labtest/patient-observation-history/2450776?panelTypeFilter=CBC
+
+# Get Hemoglobin panel results between dates
+GET /api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDate=2024-12-31
+
+# Get Hemoglobin panel results between dates with panel filter
+GET /api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDate=2024-12-31&panelTypeFilter=Hemoglobin
+```
+
+**Response Structure:**
+```json
+[
+  {
+    "labTestOBRID": "number",
+    "snomedCode": "string",
+    "messageSubject": "string",
+    "panelType": "string",
+    "observationDateTime": "date",
+    "statusChangeDateTime": "date",
+    "appointmentID": "number",
+    "labTestOBXID": "number",
+    "snomedCode_2": "string",
+    "resultName": "string",
+    "observationCodingSystem": "string",
+    "observationValue": "string",
+    "units": "string",
+    "referenceRanges": "string",
+    "abnormalFlagID": "number",
+    "abnormalFlagDesc": "string",
+    "labTestNTEID": "number",
+    "source": "string",
+    "comments": "string",
+    "priorityID": "number",
+    "providerFullName": "string",
+    "patientFullAddress": "string"
+  }
+]
+```
+
 ## Response Structure
 
 The main endpoint returns a structured response with four sections:

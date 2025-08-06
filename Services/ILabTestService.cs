@@ -14,5 +14,6 @@ namespace LabTestApi.Services
         Task<List<PatientAllergy>> GetPatientAllergiesAsync(long patientId);
         Task<List<PatientDiagnosis>> GetPatientDiagnosesAsync(long patientId);
         Task<List<PatientLabObservation>> GetPatientLabObservationsAsync(int patientId, string? observationText = null, int? practiceId = null);
+        Task<List<PatientLabObservationHistory>> GetPatientLabObservationHistoryByNameAsync(int patientId, DateTime? startDate = null, DateTime? endDate = null, string? panelTypeFilter = null);
     }
 }

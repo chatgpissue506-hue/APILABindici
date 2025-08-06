@@ -1902,7 +1902,7 @@ namespace LabTestApi.Services
                                 
                                 // AllergyType
                                 var allergyTypeOrdinal = reader.GetOrdinal("AllergyType");
-                                var allergyTypeValue = reader.IsDBNull(allergyTypeOrdinal) ? null : reader.GetString(allergyTypeOrdinal);
+                                var allergyTypeValue = GetNullableString(reader, "AllergyType");
                                 Console.WriteLine($"  AllergyType: {allergyTypeValue} (Type: {reader.GetDataTypeName(allergyTypeOrdinal)})");
                                 
                                 // Name
@@ -1928,29 +1928,29 @@ namespace LabTestApi.Services
                                 var allergy = new PatientAllergy
                                 {
                                     AllergyID = allergyIDValue,
-                                    AllergyUUID = GetNullableString(reader, "AllergyUUID"),
-                                    IsReviewed = reader.IsDBNull(reader.GetOrdinal("IsReviewed")) ? false : reader.GetBoolean(reader.GetOrdinal("IsReviewed")),
-                                    MedTechID = GetNullableInt32(reader, "MedTechID"),
+                                    AllergyUUID = allergyUUIDValue,
+                                    IsReviewed = isReviewedValue,
+                                    MedTechID = medTechIDValue,
                                     OnsetDate = onsetDateValue,
-                                    AllergyTypeID = GetNullableInt32(reader, "AllergyTypeID"),
+                                    AllergyTypeID = allergyTypeIDValue,
                                     MedicineTypeID = medicineTypeIDValue,
-                                    MedicineShortName = GetNullableString(reader, "MedicineShortName"),
-                                    MedicineClassification = GetNullableString(reader, "MedicineClassification"),
-                                    FavouriteSubstance = GetNullableString(reader, "FavouriteSubstance"),
-                                    DiseaseName = GetNullableString(reader, "DiseaseName"),
-                                    SubstanceTypeId = GetNullableInt32(reader, "SubstanceTypeId"),
-                                    Other = GetNullableString(reader, "Other"),
+                                    MedicineShortName = medicineShortNameValue,
+                                    MedicineClassification = medicineClassificationValue,
+                                    FavouriteSubstance = favouriteSubstanceValue,
+                                    DiseaseName = diseaseNameValue,
+                                    SubstanceTypeId = substanceTypeIdValue,
+                                    Other = otherValue,
                                     Reaction = reactionValue,
                                     IsActive = isActiveValue,
-                                    FullName = GetNullableString(reader, "FullName"),
+                                    FullName = fullNameValue,
                                     Comment = commentValue,
                                     IsHighlight = isHighlightValue,
-                                    InsertedAt = GetNullableDateTime(reader, "InsertedAt"),
+                                    InsertedAt = insertedAtValue,
                                     AllergyType = allergyTypeValue,
-                                    Name = GetNullableString(reader, "Name"),
-                                    IsNKA = reader.IsDBNull(reader.GetOrdinal("IsNKA")) ? false : reader.GetBoolean(reader.GetOrdinal("IsNKA")),
-                                    SequenceNo = GetNullableInt32(reader, "SequenceNo"),
-                                    Severity = GetNullableString(reader, "Severity")
+                                    Name = nameValue,
+                                    IsNKA = isNKAValue,
+                                    SequenceNo = sequenceNoValue,
+                                    Severity = severityValue
                                 };
                                 
                                 allergies.Add(allergy);
@@ -2257,6 +2257,85 @@ namespace LabTestApi.Services
         {
             Console.WriteLine($"❌ Error getting lab observations: {ex.Message}");
             return new List<PatientLabObservation>();
+        }
+    }
+
+    public async Task<List<PatientLabObservationHistory>> GetPatientLabObservationHistoryByNameAsync(int patientId, DateTime? startDate = null, DateTime? endDate = null, string? panelTypeFilter = null)
+    {
+        var observations = new List<PatientLabObservationHistory>();
+        
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Getting lab observation history for patient {patientId}...");
+                
+                using (var command = new SqlCommand("[dbo].[sp_GetPatientLabObservationHistorybyname]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@PatientID", patientId);
+                    command.Parameters.AddWithValue("@StartDate", startDate ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@EndDate", endDate ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@PanelTypeFilter", panelTypeFilter ?? (object)DBNull.Value);
+                    
+                    Console.WriteLine($"📊 Executing stored procedure with parameters:");
+                    Console.WriteLine($"  PatientID: {patientId}");
+                    Console.WriteLine($"  StartDate: {startDate?.ToString("yyyy-MM-dd") ?? "NULL"}");
+                    Console.WriteLine($"  EndDate: {endDate?.ToString("yyyy-MM-dd") ?? "NULL"}");
+                    Console.WriteLine($"  PanelTypeFilter: {panelTypeFilter ?? "NULL"}");
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var observation = new PatientLabObservationHistory
+                                {
+                                    LabTestOBRID = reader.GetInt32(reader.GetOrdinal("LabTestOBRID")),
+                                    SnomedCode = GetNullableString(reader, "SnomedCode"),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
+                                    PanelType = GetNullableString(reader, "PanelType"),
+                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
+                                    StatusChangeDateTime = GetNullableDateTime(reader, "StatusChangeDateTime"),
+                                    AppointmentID = GetNullableInt32(reader, "AppointmentID"),
+                                    LabTestOBXID = reader.GetInt32(reader.GetOrdinal("LabTestOBXID")),
+                                    SnomedCode_2 = GetNullableString(reader, "SnomedCode_2"),
+                                    ResultName = GetNullableString(reader, "ResultName"),
+                                    ObservationCodingSystem = GetNullableString(reader, "ObservationCodingSystem"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDesc"),
+                                    LabTestNTEID = GetNullableInt32(reader, "LabTestNTEID"),
+                                    Source = GetNullableString(reader, "Source"),
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
+                                    ProviderFullName = GetNullableString(reader, "ProviderFullName"),
+                                    PatientFullAddress = GetNullableString(reader, "PatientFullAddress")
+                                };
+                                
+                                observations.Add(observation);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading observation history data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                }
+                
+                Console.WriteLine($"✅ Retrieved {observations.Count} lab observation history records for patient {patientId}");
+                return observations;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting lab observation history: {ex.Message}");
+            return new List<PatientLabObservationHistory>();
         }
     }
 }
