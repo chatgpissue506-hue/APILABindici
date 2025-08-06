@@ -310,6 +310,9 @@ namespace LabTestApi.Services
                                     case "abnormalflagid":
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
+                                    case "abnormalflagdesc":
+                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
+                                        break;
                                     case "labtestnteid":
                                         labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
                                         break;
@@ -321,6 +324,15 @@ namespace LabTestApi.Services
                                         break;
                                     case "priorityid":
                                         labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
+                                    case "providerfullname":
+                                        labTestDataItem.ProviderFullName = value.ToString();
+                                        break;
+                                    case "orgname":
+                                        labTestDataItem.OrgName = value.ToString();
+                                        break;
+                                    case "foldername":
+                                        labTestDataItem.FolderName = value.ToString();
                                         break;
                                 }
                             }
@@ -382,9 +394,13 @@ namespace LabTestApi.Services
                     Units = "g/dL",
                     ReferenceRanges = "12.0-16.0",
                     AbnormalFlagID = 0,
+                    AbnormalFlagDesc = "Normal",
                     Source = "LAB",
                     Comments = "Normal result",
-                    PriorityID = 3
+                    PriorityID = 3,
+                    ProviderFullName = "Dr. Smith",
+                    OrgName = "Main Hospital",
+                    FolderName = "Lab Results"
                 },
                 new LabTestData
                 {
@@ -411,9 +427,13 @@ namespace LabTestApi.Services
                     Units = "mg/dL",
                     ReferenceRanges = "<200",
                     AbnormalFlagID = 0,
+                    AbnormalFlagDesc = "Normal",
                     Source = "LAB",
                     Comments = "Good cholesterol level",
-                    PriorityID = 2
+                    PriorityID = 2,
+                    ProviderFullName = "Dr. Johnson",
+                    OrgName = "Main Hospital",
+                    FolderName = "Lab Results"
                 }
             };
         }
@@ -596,6 +616,9 @@ namespace LabTestApi.Services
                                     case "abnormalflagid":
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
+                                    case "abnormalflagdesc":
+                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
+                                        break;
                                     case "labtestnteid":
                                         labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
                                         break;
@@ -607,6 +630,15 @@ namespace LabTestApi.Services
                                         break;
                                     case "priorityid":
                                         labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
+                                    case "providerfullname":
+                                        labTestDataItem.ProviderFullName = value.ToString();
+                                        break;
+                                    case "orgname":
+                                        labTestDataItem.OrgName = value.ToString();
+                                        break;
+                                    case "foldername":
+                                        labTestDataItem.FolderName = value.ToString();
                                         break;
                                 }
                             }
@@ -769,6 +801,9 @@ namespace LabTestApi.Services
                                     case "abnormalflagid":
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
+                                    case "abnormalflagdesc":
+                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
+                                        break;
                                     case "labtestnteid":
                                         labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
                                         break;
@@ -780,6 +815,15 @@ namespace LabTestApi.Services
                                         break;
                                     case "priorityid":
                                         labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                        break;
+                                    case "providerfullname":
+                                        labTestDataItem.ProviderFullName = value.ToString();
+                                        break;
+                                    case "orgname":
+                                        labTestDataItem.OrgName = value.ToString();
+                                        break;
+                                    case "foldername":
+                                        labTestDataItem.FolderName = value.ToString();
                                         break;
                                 }
                             }

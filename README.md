@@ -189,13 +189,27 @@ GET /api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDat
 ```json
 [
   {
+    "labTestMshID": "number",
+    "sendingApplication": "string",
+    "sendingFacility": "string",
+    "receivingFacility": "string",
+    "messageDatetime": "date",
+    "nhiNumber": "string",
+    "fullName": "string",
+    "dob": "date",
+    "genderName": "string",
+    "patientID": "string",
+    "practiceID": "string",
+    "mshInsertedAt": "date",
+    "markasRead": "boolean",
+    "ifiinboxupdate": "date",
+    "inboxrecevieddate": "date",
     "labTestOBRID": "number",
     "snomedCode": "string",
-    "messageSubject": "string",
-    "panelType": "string",
+    "mesageSubject": "string",
     "observationDateTime": "date",
     "statusChangeDateTime": "date",
-    "appointmentID": "number",
+    "appointmentID": "string",
     "labTestOBXID": "number",
     "snomedCode_2": "string",
     "resultName": "string",
@@ -208,9 +222,11 @@ GET /api/labtest/patient-observation-history/2450776?startDate=2024-01-01&endDat
     "labTestNTEID": "number",
     "source": "string",
     "comments": "string",
+    "ethnicity": "string",
     "priorityID": "number",
     "providerFullName": "string",
-    "patientFullAddress": "string"
+    "orgName": "string",
+    "folderName": "string"
   }
 ]
 ```

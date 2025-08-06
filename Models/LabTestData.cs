@@ -33,10 +33,14 @@ namespace LabTestApi.Models
         public string? Units { get; set; }
         public string? ReferenceRanges { get; set; }
         public int AbnormalFlagID { get; set; }
+        public string? AbnormalFlagDesc { get; set; }
         public int LabTestNTEID { get; set; }
         public string? Source { get; set; }
         public string? Comments { get; set; }
         public string? Ethnicity { get; set; }
         public int PriorityID { get; set; }
+        public string? ProviderFullName { get; set; }
+        public string? OrgName { get; set; }
+        public string? FolderName { get; set; }
     }
 }
