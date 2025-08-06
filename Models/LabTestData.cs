@@ -21,6 +21,7 @@ namespace LabTestApi.Models
         public DateTime inboxrecevieddate { get; set; }
         public int LabTestOBRID { get; set; }
         public string? SnomedCode { get; set; }
+        public string? PanelType { get; set; }
         public string? MesageSubject { get; set; }
         public DateTime ObservationDateTime { get; set; }
         public DateTime StatusChangeDateTime { get; set; }

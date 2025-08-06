@@ -2655,6 +2655,30 @@ namespace LabTestApi.Services
                                         case "labtestobrid":
                                             labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
                                             break;
+                                        case "snomedcode":
+                                            labTestDataItem.SnomedCode = value?.ToString();
+                                            break;
+                                        case "paneltype":
+                                            labTestDataItem.PanelType = value?.ToString();
+                                            break;
+                                        case "appointmentid":
+                                            labTestDataItem.AppointmentID = value?.ToString();
+                                            break;
+                                        case "labtestobxid":
+                                            labTestDataItem.LabTestOBXID = Convert.ToInt32(value);
+                                            break;
+                                        case "snomedcode_2":
+                                            labTestDataItem.SnomedCode_2 = value?.ToString();
+                                            break;
+                                        case "resultname":
+                                            labTestDataItem.ResultName = value?.ToString();
+                                            break;
+                                        case "observationcodingsystem":
+                                            labTestDataItem.ObservationCodingSystem = value?.ToString();
+                                            break;
+                                        case "referenceranges":
+                                            labTestDataItem.ReferenceRanges = value?.ToString();
+                                            break;
                                         case "usdescription":
                                             labTestDataItem.MesageSubject = value.ToString();
                                             break;
