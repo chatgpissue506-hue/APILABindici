@@ -100,6 +100,14 @@ Accept: application/json
 
 ###
 
+### Get patient individual lab test data using GetLabTestDataWithindividuals SP (NEW)
+GET {{LabTestApi_HostAddress}}/api/labtest/patient-individual/2450776
+Accept: application/json
+
+###
+
+###
+
 ### Get patient lab observations with practice ID filter
 GET {{LabTestApi_HostAddress}}/api/labtest/patient-observations/46359?practiceId=1
 Accept: application/json

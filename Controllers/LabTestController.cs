@@ -308,5 +308,32 @@ namespace LabTestApi.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Get lab test data for individual patient using GetLabTestDataWithindividuals stored procedure
+        /// </summary>
+        /// <param name="patientId">Patient ID</param>
+        /// <returns>List of lab test data for the patient</returns>
+        [HttpGet("patient-individual/{patientId:int}")]
+        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetPatientIndividualLabTestData(int patientId)
+        {
+            if (patientId <= 0)
+            {
+                return BadRequest("Valid Patient ID is required");
+            }
+
+            try
+            {
+                var result = await _labTestService.GetPatientIndividualLabTestDataAsync(patientId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving lab test data", details = ex.Message });
+            }
+        }
     }
 }

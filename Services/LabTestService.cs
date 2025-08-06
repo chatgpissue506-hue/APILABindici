@@ -713,11 +713,11 @@ namespace LabTestApi.Services
                     // First, get patient information
                     var patientInfo = await GetPatientInfoAsync(connection, patientId);
                     
-                    // Try to execute the stored procedure directly
-                    Console.WriteLine("⏳ Attempting to execute GetPatientLabTestData stored procedure...");
+                    // Use the new stored procedure GetLabTestDataWithindividuals
+                    Console.WriteLine("⏳ Executing GetLabTestDataWithindividuals stored procedure...");
                     
-                    Console.WriteLine("⏳ Executing GetPatientLabTestData stored procedure...");
-                    using var command = new SqlCommand("EXEC GetPatientLabTestData @pPatientID", connection);
+                    using var command = new SqlCommand("[dbo].[GetLabTestDataWithindividuals]", connection);
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@pPatientID", patientId);
                     using var reader = await command.ExecuteReaderAsync();
                     
@@ -751,21 +751,76 @@ namespace LabTestApi.Services
                             
                             for (int i = 0; i < reader.FieldCount; i++)
                             {
-                                if (reader.IsDBNull(i)) continue;
-                                
                                 var columnName = reader.GetName(i);
-                                var value = reader[i];
+                                var value = reader.IsDBNull(i) ? null : reader[i];
+                                
+                                Console.WriteLine($"  Reading column: {columnName} = {value}");
+                                
+                                // Debug: Log specific columns we're looking for
+                                if (columnName.ToLower().Contains("abnormal") || 
+                                    columnName.ToLower().Contains("priority") || 
+                                    columnName.ToLower().Contains("provider") || 
+                                    columnName.ToLower().Contains("org") || 
+                                    columnName.ToLower().Contains("folder"))
+                                {
+                                    Console.WriteLine($"  🔍 FOUND IMPORTANT COLUMN: {columnName} = {value}");
+                                }
+                                
+                                // Log all column names for debugging
+                                Console.WriteLine($"  📋 COLUMN: {columnName} = {value}");
                                 
                                 // Map columns based on name rather than position
                                 switch (columnName.ToLower())
                                 {
-                                    case "labtestobrid":
-                                        labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
+                                    case "labtestmshid":
+                                        labTestDataItem.LabTestMshID = Convert.ToInt32(value);
                                         break;
-                                    case "snomedcode":
-                                        labTestDataItem.SnomedCode = value.ToString();
+                                    case "sendingapplication":
+                                        labTestDataItem.SendingApplication = value.ToString();
                                         break;
-                                    case "mesagesubject":
+                                    case "sendingfacility":
+                                        labTestDataItem.SendingFacility = value.ToString();
+                                        break;
+                                    case "receivingfacility":
+                                        labTestDataItem.ReceivingFacility = value.ToString();
+                                        break;
+                                    case "messagedatetime":
+                                        labTestDataItem.MessageDatetime = Convert.ToDateTime(value);
+                                        break;
+                                    case "nhinumber":
+                                        labTestDataItem.NHINumber = value.ToString();
+                                        break;
+                                    case "fullname":
+                                        labTestDataItem.FullName = value.ToString();
+                                        break;
+                                    case "dob":
+                                        labTestDataItem.DOB = Convert.ToDateTime(value);
+                                        break;
+                                    case "gendername":
+                                        labTestDataItem.GenderName = value.ToString();
+                                        break;
+                                    case "patientid":
+                                        labTestDataItem.PatientID = value.ToString();
+                                        break;
+                                    case "practiceid":
+                                        labTestDataItem.PracticeID = value.ToString();
+                                        break;
+                                    case "mshinsertedat":
+                                        labTestDataItem.MshInsertedAt = Convert.ToDateTime(value);
+                                        break;
+                                    case "markasread":
+                                        labTestDataItem.MarkasRead = Convert.ToBoolean(value);
+                                        break;
+                                    case "ifiinboxupdate":
+                                        labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                        break;
+                                    case "inboxrecevieddate":
+                                        labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                        break;
+                                    case "usdescription":
+                                        labTestDataItem.MesageSubject = value.ToString();
+                                        break;
+                                    case "messagesubject":
                                         labTestDataItem.MesageSubject = value.ToString();
                                         break;
                                     case "observationdatetime":
@@ -774,56 +829,32 @@ namespace LabTestApi.Services
                                     case "statuschangedatetime":
                                         labTestDataItem.StatusChangeDateTime = Convert.ToDateTime(value);
                                         break;
-                                    case "appointmentid":
-                                        labTestDataItem.AppointmentID = value.ToString();
-                                        break;
-                                    case "labtestobxid":
-                                        labTestDataItem.LabTestOBXID = Convert.ToInt32(value);
-                                        break;
-                                    case "snomedcode_2":
-                                        labTestDataItem.SnomedCode_2 = value.ToString();
-                                        break;
-                                    case "resultname":
-                                        labTestDataItem.ResultName = value.ToString();
-                                        break;
-                                    case "observationcodingsystem":
-                                        labTestDataItem.ObservationCodingSystem = value.ToString();
-                                        break;
                                     case "observationvalue":
                                         labTestDataItem.ObservationValue = value.ToString();
                                         break;
                                     case "units":
                                         labTestDataItem.Units = value.ToString();
                                         break;
-                                    case "referenceranges":
-                                        labTestDataItem.ReferenceRanges = value.ToString();
-                                        break;
                                     case "abnormalflagid":
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
                                     case "abnormalflagdesc":
-                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
-                                        break;
-                                    case "labtestnteid":
-                                        labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
-                                        break;
-                                    case "source":
-                                        labTestDataItem.Source = value.ToString();
-                                        break;
-                                    case "comments":
-                                        labTestDataItem.Comments = value.ToString();
+                                        labTestDataItem.AbnormalFlagDesc = value?.ToString();
                                         break;
                                     case "priorityid":
                                         labTestDataItem.PriorityID = Convert.ToInt32(value);
                                         break;
                                     case "providerfullname":
-                                        labTestDataItem.ProviderFullName = value.ToString();
+                                        labTestDataItem.ProviderFullName = value?.ToString();
+                                        break;
+                                    case "providerfamilyname":
+                                        labTestDataItem.ProviderFullName = value?.ToString();
                                         break;
                                     case "orgname":
-                                        labTestDataItem.OrgName = value.ToString();
+                                        labTestDataItem.OrgName = value?.ToString();
                                         break;
                                     case "foldername":
-                                        labTestDataItem.FolderName = value.ToString();
+                                        labTestDataItem.FolderName = value?.ToString();
                                         break;
                                 }
                             }
@@ -2514,6 +2545,174 @@ namespace LabTestApi.Services
         {
             Console.WriteLine($"❌ Error getting medication details: {ex.Message}");
             return new List<PatientMedication>();
+        }
+    }
+
+    public async Task<IEnumerable<LabTestData>> GetPatientIndividualLabTestDataAsync(int patientId)
+    {
+        var labTestDataList = new List<LabTestData>();
+        
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Getting individual lab test data for patient {patientId} using GetLabTestDataWithindividuals...");
+                
+                using (var command = new SqlCommand("[dbo].[GetLabTestDataWithindividuals]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@pPatientID", patientId);
+                    
+                    Console.WriteLine($"📊 Executing stored procedure GetLabTestDataWithindividuals with PatientID: {patientId}");
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        Console.WriteLine($"📋 Reading data from stored procedure...");
+                        Console.WriteLine($"📊 Number of columns: {reader.FieldCount}");
+                        
+                        // Print column information
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
+                        Console.WriteLine();
+                        
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var labTestDataItem = new LabTestData();
+                                
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    var columnName = reader.GetName(i);
+                                    var value = reader.IsDBNull(i) ? null : reader[i];
+                                    
+                                    Console.WriteLine($"  Reading column: {columnName} = {value}");
+                                    
+                                    // Debug: Log specific columns we're looking for
+                                    if (columnName.ToLower().Contains("abnormal") || 
+                                        columnName.ToLower().Contains("priority") || 
+                                        columnName.ToLower().Contains("provider") || 
+                                        columnName.ToLower().Contains("org") || 
+                                        columnName.ToLower().Contains("folder"))
+                                    {
+                                        Console.WriteLine($"  🔍 FOUND IMPORTANT COLUMN: {columnName} = {value}");
+                                    }
+                                    
+                                    // Log all column names for debugging
+                                    Console.WriteLine($"  📋 COLUMN: {columnName} = {value}");
+                                    
+                                    // Map columns based on name rather than position
+                                    switch (columnName.ToLower())
+                                    {
+                                        case "labtestmshid":
+                                            labTestDataItem.LabTestMshID = Convert.ToInt32(value);
+                                            break;
+                                        case "sendingapplication":
+                                            labTestDataItem.SendingApplication = value.ToString();
+                                            break;
+                                        case "sendingfacility":
+                                            labTestDataItem.SendingFacility = value.ToString();
+                                            break;
+                                        case "receivingfacility":
+                                            labTestDataItem.ReceivingFacility = value.ToString();
+                                            break;
+                                        case "messagedatetime":
+                                            labTestDataItem.MessageDatetime = Convert.ToDateTime(value);
+                                            break;
+                                        case "nhinumber":
+                                            labTestDataItem.NHINumber = value.ToString();
+                                            break;
+                                        case "fullname":
+                                            labTestDataItem.FullName = value.ToString();
+                                            break;
+                                        case "dob":
+                                            labTestDataItem.DOB = Convert.ToDateTime(value);
+                                            break;
+                                        case "gendername":
+                                            labTestDataItem.GenderName = value.ToString();
+                                            break;
+                                        case "patientid":
+                                            labTestDataItem.PatientID = value.ToString();
+                                            break;
+                                        case "practiceid":
+                                            labTestDataItem.PracticeID = value.ToString();
+                                            break;
+                                        case "mshinsertedat":
+                                            labTestDataItem.MshInsertedAt = Convert.ToDateTime(value);
+                                            break;
+                                        case "markasread":
+                                            labTestDataItem.MarkasRead = Convert.ToBoolean(value);
+                                            break;
+                                        case "ifiinboxupdate":
+                                            labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                            break;
+                                        case "inboxrecevieddate":
+                                            labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                            break;
+                                        case "usdescription":
+                                            labTestDataItem.MesageSubject = value.ToString();
+                                            break;
+                                        case "messagesubject":
+                                            labTestDataItem.MesageSubject = value.ToString();
+                                            break;
+                                        case "observationdatetime":
+                                            labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
+                                            break;
+                                        case "statuschangedatetime":
+                                            labTestDataItem.StatusChangeDateTime = Convert.ToDateTime(value);
+                                            break;
+                                        case "observationvalue":
+                                            labTestDataItem.ObservationValue = value.ToString();
+                                            break;
+                                        case "units":
+                                            labTestDataItem.Units = value.ToString();
+                                            break;
+                                        case "abnormalflagid":
+                                            labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
+                                            break;
+                                        case "abnormalflagdesc":
+                                            labTestDataItem.AbnormalFlagDesc = value?.ToString();
+                                            break;
+                                        case "priorityid":
+                                            labTestDataItem.PriorityID = Convert.ToInt32(value);
+                                            break;
+                                        case "providerfullname":
+                                            labTestDataItem.ProviderFullName = value?.ToString();
+                                            break;
+                                        case "providerfamilyname":
+                                            labTestDataItem.ProviderFullName = value?.ToString();
+                                            break;
+                                        case "orgname":
+                                            labTestDataItem.OrgName = value?.ToString();
+                                            break;
+                                        case "foldername":
+                                            labTestDataItem.FolderName = value?.ToString();
+                                            break;
+                                    }
+                                }
+                                
+                                labTestDataList.Add(labTestDataItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading lab test data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                }
+                
+                Console.WriteLine($"✅ Retrieved {labTestDataList.Count} lab test records for patient {patientId}");
+                return labTestDataList;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting individual lab test data: {ex.Message}");
+            return new List<LabTestData>();
         }
     }
 }

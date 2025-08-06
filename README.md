@@ -6,6 +6,9 @@ A .NET Core Web API for retrieving lab test data from a SQL Server database usin
 
 ### Updated Stored Procedure Support
 
+The API has been updated to support multiple stored procedures with enhanced functionality:
+
+#### 1. GetPatientLabTestData (Enhanced)
 The API has been updated to support the enhanced `GetPatientLabTestData` stored procedure with the following improvements:
 
 #### New Features Added:
@@ -40,6 +43,62 @@ The API has been updated to support the enhanced `GetPatientLabTestData` stored 
 
 - `GET /api/labtest/patientinboxdetail/{patientId}?labTestMshID={optional}`
 - `GET /api/labtest/patient-labtest-updated/{patientId}?labTestMshID={optional}`
+
+#### 2. GetLabTestDataWithindividuals (New)
+A new stored procedure endpoint has been added for individual patient lab test data:
+
+**Endpoint**: `GET /api/labtest/patient-individual/{patientId}`
+
+**Description**: Retrieves lab test data for a specific patient using the `[dbo].[GetLabTestDataWithindividuals]` stored procedure.
+
+**Parameters**:
+- `patientId` (int, required): The patient ID to retrieve data for
+
+**Response**: Returns a list of `LabTestData` objects with the following enhanced fields:
+- `abnormalFlagDesc`: Description of the abnormal flag (e.g., "Low")
+- `priorityID`: Priority level (2 or 3 based on stored procedure logic)
+- `providerFullName`: Full name of the provider
+- `orgName`: Organization name
+- `folderName`: Folder name
+
+**Example Request**:
+```
+GET /api/labtest/patient-individual/2450776
+```
+
+**Example Response**:
+```json
+[
+  {
+    "labTestMshID": 430838,
+    "sendingApplication": "test",
+    "sendingFacility": "test",
+    "receivingFacility": "Testn28n6ujh",
+    "messageDatetime": "2023-10-16T11:40:51.757",
+    "nhiNumber": "SHRTDGE",
+    "fullName": "Rachel UWZZMZZZ",
+    "dob": "1970-01-01T00:00:00",
+    "genderName": "Male",
+    "patientID": "2450776",
+    "practiceID": "901",
+    "mshInsertedAt": "2023-10-17T00:40:51.67",
+    "markasRead": true,
+    "ifiinboxupdate": "2024-09-19T17:59:47.03",
+    "inboxrecevieddate": "0001-01-01T00:00:00",
+    "mesageSubject": "Blood Sample",
+    "observationDateTime": "2023-04-21T14:00:00",
+    "statusChangeDateTime": "2023-06-21T16:21:00",
+    "observationValue": "0.33",
+    "units": "L/L",
+    "abnormalFlagID": 1,
+    "abnormalFlagDesc": "Low",
+    "priorityID": 3,
+    "providerFullName": "farhaj",
+    "orgName": "Maraenui Medical",
+    "folderName": "Lab"
+  }
+]
+```
 
 #### Model Changes:
 
