@@ -2652,6 +2652,9 @@ namespace LabTestApi.Services
                                         case "inboxrecevieddate":
                                             labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
                                             break;
+                                        case "labtestobrid":
+                                            labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
+                                            break;
                                         case "usdescription":
                                             labTestDataItem.MesageSubject = value.ToString();
                                             break;
