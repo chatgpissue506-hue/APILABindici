@@ -91,7 +91,7 @@ app.MapGet("/api-docs", () => new
     endpoints = new[]
     {
         new { method = "GET", path = "/api/labtest", description = "Get all lab test data" },
-        new { method = "GET", path = "/api/labtest/patient/{patientId}", description = "Get lab test data by patient ID (string)" },
+        new { method = "GET", path = "/api/labtest/GetPatientIndividualResults/{patientId}", description = "Get lab test data by patient ID (string)" },
         new { method = "GET", path = "/api/labtest/patient-sp/{patientId:long}", description = "Get lab test data by patient ID using GetPatientLabTestData SP (bigint)" },
         new { method = "GET", path = "/api/labtest/patient-labtest-updated/{patientId:long}", description = "Get structured lab test data using updated GetPatientLabTestData SP (header + details)" },
         new { method = "GET", path = "/api/labtest/patient-allergies/{patientId:long}", description = "Get patient allergies" },

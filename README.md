@@ -120,7 +120,7 @@ GET /api/labtest
 
 ### Get Lab Test Data by Patient
 ```
-GET /api/labtest/patient/{patientId}
+GET /api/labtest/GetPatientIndividualResults/{patientId}
 ```
 
 ### Get Lab Test Data by Date Range

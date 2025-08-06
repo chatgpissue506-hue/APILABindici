@@ -1600,6 +1600,9 @@ namespace LabTestApi.Services
                                 var isPrimaryDiagnosisValue = reader.IsDBNull(isPrimaryDiagnosisOrdinal) ? false : reader.GetBoolean(isPrimaryDiagnosisOrdinal);
                                 Console.WriteLine($"  IsPrimaryDiagnosis: {isPrimaryDiagnosisValue} (Type: {reader.GetDataTypeName(isPrimaryDiagnosisOrdinal)})");
                                 
+                                // Initialize DiagnoseStatusName (will be set to null if not found)
+                                string? diagnoseStatusNameValue = null;
+                                
                                 var diagnosis = new PatientDiagnosis
                                 {
                                     DiagnosisID = diagnosisIDValue,

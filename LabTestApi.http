@@ -9,7 +9,7 @@ Accept: application/json
 ###
 
 ### Get lab test data by patient ID (string)
-GET {{LabTestApi_HostAddress}}/api/labtest/patient/12345
+GET {{LabTestApi_HostAddress}}/api/labtest/GetPatientIndividualResults/12345
 Accept: application/json
 
 ###

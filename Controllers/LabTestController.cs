@@ -40,7 +40,7 @@ namespace LabTestApi.Controllers
         /// </summary>
         /// <param name="patientId">The patient ID to filter by</param>
         /// <returns>List of lab test data for the patient</returns>
-        [HttpGet("patient/{patientId}")]
+        [HttpGet("GetPatientIndividualResults/{patientId}")]
         [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
