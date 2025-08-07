@@ -12,5 +12,6 @@ namespace LabTestApi.Models
         public DateTime MshInsertedAt { get; set; }
         public string? Ethnicity { get; set; }
         public int? AgeFromProfile { get; set; }
+        public string? PatientFullAddress { get; set; }
     }
 } 

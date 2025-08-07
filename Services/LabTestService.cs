@@ -1157,6 +1157,19 @@ namespace LabTestApi.Services
                                 Console.WriteLine($"  AgeFromProfile: Not found in result set - {ex.Message}");
                             }
                             
+                            // PatientFullAddress
+                            string? patientFullAddressValue = null;
+                            try
+                            {
+                                var patientFullAddressOrdinal = reader.GetOrdinal("PatientFullAddress");
+                                patientFullAddressValue = reader.IsDBNull(patientFullAddressOrdinal) ? null : reader.GetString(patientFullAddressOrdinal);
+                                Console.WriteLine($"  PatientFullAddress: {patientFullAddressValue} (Type: {reader.GetDataTypeName(patientFullAddressOrdinal)})");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"  PatientFullAddress: Not found in result set - {ex.Message}");
+                            }
+                            
                             var header = new PatientLabTestHeader
                             {
                                 NHINumber = nhiNumberValue,
@@ -1168,7 +1181,8 @@ namespace LabTestApi.Services
                                 MshInsertedAt = mshInsertedAtValue,
                                 Ethnicity = ethnicityValue,
                                 Age = ageValue,
-                                AgeFromProfile = ageFromProfileValue
+                                AgeFromProfile = ageFromProfileValue,
+                                PatientFullAddress = patientFullAddressValue
                             };
                             
                             response.Header = header;
@@ -2671,7 +2685,7 @@ namespace LabTestApi.Services
                                             labTestDataItem.SnomedCode_2 = value?.ToString();
                                             break;
                                         case "resultname":
-                                            labTestDataItem.ResultName = value?.ToString();
+                                            labTestDataItem.ResultName = value?.ToString() ?? "";
                                             break;
                                         case "observationcodingsystem":
                                             labTestDataItem.ObservationCodingSystem = value?.ToString();
@@ -2692,7 +2706,7 @@ namespace LabTestApi.Services
                                             labTestDataItem.StatusChangeDateTime = Convert.ToDateTime(value);
                                             break;
                                         case "observationvalue":
-                                            labTestDataItem.ObservationValue = value.ToString();
+                                            labTestDataItem.ObservationValue = value?.ToString() ?? "";
                                             break;
                                         case "units":
                                             labTestDataItem.Units = value.ToString();
