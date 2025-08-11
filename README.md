@@ -67,7 +67,7 @@ GET /api/labtest/patient-individual/2450776
 ```
 
 **Example Response**:
-```json
+   ```json
 [
   {
     "labTestMshID": 430838,

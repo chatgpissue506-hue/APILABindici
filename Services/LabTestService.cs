@@ -59,12 +59,33 @@ namespace LabTestApi.Services
             return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
         }
 
-        private string? GetNullableString(SqlDataReader reader, string columnName)
+        // Helper method to safely get nullable DateTime from reader with error handling
+        private DateTime? GetNullableDateTimeSafe(SqlDataReader reader, string columnName)
         {
             try
             {
                 var ordinal = reader.GetOrdinal(columnName);
-                return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+                return reader.IsDBNull(ordinal) ? null : reader.GetDateTime(ordinal);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Column doesn't exist in the result set
+                Console.WriteLine($"⚠️ Column '{columnName}' not found in result set, using null");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error reading column '{columnName}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private string? GetNullableString(SqlDataReader reader, string columnName)
+        {
+            try
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
             }
             catch (Exception ex)
             {
@@ -1059,116 +1080,158 @@ namespace LabTestApi.Services
                             Console.WriteLine("🔍 Reading header fields with detailed logging:");
                             
                             // NHINumber
-                            var nhiNumberOrdinal = reader.GetOrdinal("NHINumber");
-                            var nhiNumberValue = reader.IsDBNull(nhiNumberOrdinal) ? null : reader.GetString(nhiNumberOrdinal);
-                            Console.WriteLine($"  NHINumber: {nhiNumberValue} (Type: {reader.GetDataTypeName(nhiNumberOrdinal)})");
+                            string? nhiNumberValue = null;
+                            string? nhiNumberType = null;
+                            try { 
+                                var nhiNumberOrdinal = reader.GetOrdinal("NHINumber"); 
+                                nhiNumberValue = reader.IsDBNull(nhiNumberOrdinal) ? null : reader.GetString(nhiNumberOrdinal); 
+                                if (string.IsNullOrWhiteSpace(nhiNumberValue)) nhiNumberValue = null; 
+                                nhiNumberType = reader.GetDataTypeName(nhiNumberOrdinal);
+                            } catch { 
+                                nhiNumberValue = null; 
+                                nhiNumberType = "Unknown";
+                            }
+                            Console.WriteLine($"  NHINumber: {nhiNumberValue} (Type: {nhiNumberType})");
                             
                             // FullName
-                            var fullNameOrdinal = reader.GetOrdinal("FullName");
-                            var fullNameValue = reader.IsDBNull(fullNameOrdinal) ? null : reader.GetString(fullNameOrdinal);
-                            Console.WriteLine($"  FullName: {fullNameValue} (Type: {reader.GetDataTypeName(fullNameOrdinal)})");
+                            string? fullNameValue = null;
+                            string? fullNameType = null;
+                            try { 
+                                var fullNameOrdinal = reader.GetOrdinal("FullName"); 
+                                fullNameValue = reader.IsDBNull(fullNameOrdinal) ? null : reader.GetString(fullNameOrdinal); 
+                                if (string.IsNullOrWhiteSpace(fullNameValue)) fullNameValue = null; 
+                                fullNameType = reader.GetDataTypeName(fullNameOrdinal);
+                            } catch { 
+                                fullNameValue = null; 
+                                fullNameType = "Unknown";
+                            }
+                            Console.WriteLine($"  FullName: {fullNameValue} (Type: {fullNameType})");
                             
                             // DOB
-                            var dobOrdinal = reader.GetOrdinal("DOB");
-                            var dobValue = reader.IsDBNull(dobOrdinal) ? DateTime.MinValue : reader.GetDateTime(dobOrdinal);
-                            Console.WriteLine($"  DOB: {dobValue} (Type: {reader.GetDataTypeName(dobOrdinal)})");
+                            DateTime dobValue = DateTime.MinValue;
+                            string? dobType = null;
+                            try { 
+                                var dobOrdinal = reader.GetOrdinal("DOB"); 
+                                dobValue = reader.IsDBNull(dobOrdinal) ? DateTime.MinValue : reader.GetDateTime(dobOrdinal); 
+                                dobType = reader.GetDataTypeName(dobOrdinal);
+                            } catch { 
+                                dobValue = DateTime.MinValue; 
+                                dobType = "Unknown";
+                            }
+                            Console.WriteLine($"  DOB: {dobValue} (Type: {dobType})");
                             
                             // GenderName
-                            var genderNameOrdinal = reader.GetOrdinal("GenderName");
-                            var genderNameValue = reader.IsDBNull(genderNameOrdinal) ? null : reader.GetString(genderNameOrdinal);
-                            Console.WriteLine($"  GenderName: {genderNameValue} (Type: {reader.GetDataTypeName(genderNameOrdinal)})");
+                            string? genderNameValue = null;
+                            string? genderNameType = null;
+                            try { 
+                                var genderNameOrdinal = reader.GetOrdinal("GenderName"); 
+                                genderNameValue = reader.IsDBNull(genderNameOrdinal) ? null : reader.GetString(genderNameOrdinal); 
+                                if (string.IsNullOrWhiteSpace(genderNameValue)) genderNameValue = null; 
+                                genderNameType = reader.GetDataTypeName(genderNameOrdinal);
+                            } catch { 
+                                genderNameValue = null; 
+                                genderNameType = "Unknown";
+                            }
+                            Console.WriteLine($"  GenderName: {genderNameValue} (Type: {genderNameType})");
                             
                             // PatientID
-                            var patientIdOrdinal = reader.GetOrdinal("PatientID");
-                            var patientIdValue = GetNullableInt32(reader, "PatientID")?.ToString();
-                            Console.WriteLine($"  PatientID: {patientIdValue} (Type: {reader.GetDataTypeName(patientIdOrdinal)})");
-                            
+                            string? patientIdValue = null;
+                            string? patientIdType = null;
+                            try { 
+                                var patientIdOrdinal = reader.GetOrdinal("PatientID"); 
+                                patientIdValue = reader.IsDBNull(patientIdOrdinal) ? null : reader.GetValue(patientIdOrdinal)?.ToString(); 
+                                if (string.IsNullOrWhiteSpace(patientIdValue)) patientIdValue = null; 
+                                patientIdType = reader.GetDataTypeName(patientIdOrdinal);
+                            } catch { 
+                                patientIdValue = null; 
+                                patientIdType = "Unknown";
+                            }
+                            Console.WriteLine($"  PatientID: {patientIdValue} (Type: {patientIdType})");
+                                
                             // PracticeID
-                            var practiceIdOrdinal = reader.GetOrdinal("PracticeID");
-                            var practiceIdValue = GetNullableInt32(reader, "PracticeID")?.ToString();
-                            Console.WriteLine($"  PracticeID: {practiceIdValue} (Type: {reader.GetDataTypeName(practiceIdOrdinal)})");
+                            string? practiceIdValue = null;
+                            string? practiceIdType = null;
+                            try { 
+                                var practiceIdOrdinal = reader.GetOrdinal("PracticeID"); 
+                                practiceIdValue = reader.IsDBNull(practiceIdOrdinal) ? null : reader.GetValue(practiceIdOrdinal)?.ToString(); 
+                                if (string.IsNullOrWhiteSpace(practiceIdValue)) practiceIdValue = null; 
+                                practiceIdType = reader.GetDataTypeName(practiceIdOrdinal);
+                            } catch { 
+                                practiceIdValue = null; 
+                                practiceIdType = "Unknown";
+                            }
+                            Console.WriteLine($"  PracticeID: {practiceIdValue} (Type: {practiceIdType})");
                             
                             // MshInsertedAt
-                            var mshInsertedAtOrdinal = reader.GetOrdinal("MshInsertedAt");
-                            var mshInsertedAtValue = reader.IsDBNull(mshInsertedAtOrdinal) ? DateTime.MinValue : reader.GetDateTime(mshInsertedAtOrdinal);
-                            Console.WriteLine($"  MshInsertedAt: {mshInsertedAtValue} (Type: {reader.GetDataTypeName(mshInsertedAtOrdinal)})");
+                            DateTime mshInsertedAtValue = DateTime.MinValue;
+                            string? mshInsertedAtType = null;
+                            try { 
+                                var mshInsertedAtOrdinal = reader.GetOrdinal("MshInsertedAt"); 
+                                mshInsertedAtValue = reader.IsDBNull(mshInsertedAtOrdinal) ? DateTime.MinValue : reader.GetDateTime(mshInsertedAtOrdinal); 
+                                mshInsertedAtType = reader.GetDataTypeName(mshInsertedAtOrdinal);
+                            } catch { 
+                                mshInsertedAtValue = DateTime.MinValue; 
+                                mshInsertedAtType = "Unknown";
+                            }
+                            Console.WriteLine($"  MshInsertedAt: {mshInsertedAtValue} (Type: {mshInsertedAtType})");
                             
                             // Ethnicity
-                            var ethnicityOrdinal = reader.GetOrdinal("Ethnicity");
-                            var ethnicityValue = reader.IsDBNull(ethnicityOrdinal) ? null : reader.GetString(ethnicityOrdinal);
-                            Console.WriteLine($"  Ethnicity: {ethnicityValue} (Type: {reader.GetDataTypeName(ethnicityOrdinal)})");
+                            string? ethnicityValue = null;
+                            string? ethnicityType = null;
+                            try { 
+                                var ethnicityOrdinal = reader.GetOrdinal("Ethnicity"); 
+                                ethnicityValue = reader.IsDBNull(ethnicityOrdinal) ? null : reader.GetString(ethnicityOrdinal); 
+                                if (string.IsNullOrWhiteSpace(ethnicityValue)) ethnicityValue = null; 
+                                ethnicityType = reader.GetDataTypeName(ethnicityOrdinal);
+                            } catch { 
+                                ethnicityValue = null; 
+                                ethnicityType = "Unknown";
+                            }
+                            Console.WriteLine($"  Ethnicity: {ethnicityValue} (Type: {ethnicityType})");
                             
                             // Age (calculated)
-                            var ageOrdinal = reader.GetOrdinal("Age");
                             int? ageValue = null;
-                            if (!reader.IsDBNull(ageOrdinal))
-                            {
-                                var dataType = reader.GetDataTypeName(ageOrdinal).ToLower();
-                                if (dataType == "decimal" || dataType == "numeric")
-                                {
-                                    var decimalValue = reader.GetDecimal(ageOrdinal);
-                                    ageValue = (int)decimalValue;
-                                }
-                                else if (dataType == "int" || dataType == "bigint")
-                                {
-                                    ageValue = reader.GetInt32(ageOrdinal);
-                                }
-                                else
-                                {
-                                    // Try as string
-                                    if (int.TryParse(reader.GetString(ageOrdinal), out int age))
-                                    {
-                                        ageValue = age;
-                                    }
-                                }
+                            string? ageType = null;
+                            try { 
+                                var ageOrdinal = reader.GetOrdinal("Age"); 
+                                if (!reader.IsDBNull(ageOrdinal)) { 
+                                    var dataType = reader.GetDataTypeName(ageOrdinal).ToLower(); 
+                                    ageType = reader.GetDataTypeName(ageOrdinal);
+                                    if (dataType == "decimal" || dataType == "numeric") { 
+                                        var decimalValue = reader.GetDecimal(ageOrdinal); 
+                                        ageValue = (int)decimalValue; 
+                                    } else if (dataType == "int" || dataType == "bigint") { 
+                                        ageValue = reader.GetInt32(ageOrdinal); 
+                                    } else { 
+                                        if (int.TryParse(reader.GetString(ageOrdinal), out int age)) { 
+                                            ageValue = age; 
+                                        } 
+                                    } 
+                                } 
+                            } catch { 
+                                ageValue = null; 
+                                ageType = "Unknown";
                             }
-                            Console.WriteLine($"  Age: {ageValue} (Type: {reader.GetDataTypeName(ageOrdinal)})");
+                            Console.WriteLine($"  Age: {ageValue} (Type: {ageType})");
                             
                             // AgeFromProfile (from tp.age)
                             int? ageFromProfileValue = null;
-                            try
-                            {
-                                var ageFromProfileOrdinal = reader.GetOrdinal("age");
-                                if (!reader.IsDBNull(ageFromProfileOrdinal))
-                                {
-                                    var dataType = reader.GetDataTypeName(ageFromProfileOrdinal).ToLower();
-                                    if (dataType == "int" || dataType == "bigint")
-                                    {
-                                        ageFromProfileValue = reader.GetInt32(ageFromProfileOrdinal);
-                                    }
-                                    else if (dataType == "decimal" || dataType == "numeric")
-                                    {
-                                        var decimalValue = reader.GetDecimal(ageFromProfileOrdinal);
-                                        ageFromProfileValue = (int)decimalValue;
-                                    }
-                                    else
-                                    {
-                                        // Try as string
-                                        if (int.TryParse(reader.GetString(ageFromProfileOrdinal), out int age))
-                                        {
-                                            ageFromProfileValue = age;
-                                        }
-                                    }
-                                }
-                                Console.WriteLine($"  AgeFromProfile: {ageFromProfileValue} (Type: {reader.GetDataTypeName(ageFromProfileOrdinal)})");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"  AgeFromProfile: Not found in result set - {ex.Message}");
-                            }
+                            try { var ageFromProfileOrdinal = reader.GetOrdinal("age"); if (!reader.IsDBNull(ageFromProfileOrdinal)) { var dataType = reader.GetDataTypeName(ageFromProfileOrdinal).ToLower(); if (dataType == "int" || dataType == "bigint") { ageFromProfileValue = reader.GetInt32(ageFromProfileOrdinal); } else if (dataType == "decimal" || dataType == "numeric") { var decimalValue = reader.GetDecimal(ageFromProfileOrdinal); ageFromProfileValue = (int)decimalValue; } else { if (int.TryParse(reader.GetString(ageFromProfileOrdinal), out int age)) { ageFromProfileValue = age; } } } } catch { ageFromProfileValue = null; }
+                            Console.WriteLine($"  AgeFromProfile: {ageFromProfileValue} (Type: Unknown)");
                             
                             // PatientFullAddress
                             string? patientFullAddressValue = null;
-                            try
-                            {
-                                var patientFullAddressOrdinal = reader.GetOrdinal("PatientFullAddress");
-                                patientFullAddressValue = reader.IsDBNull(patientFullAddressOrdinal) ? null : reader.GetString(patientFullAddressOrdinal);
-                                Console.WriteLine($"  PatientFullAddress: {patientFullAddressValue} (Type: {reader.GetDataTypeName(patientFullAddressOrdinal)})");
+                            string? patientFullAddressType = null;
+                            try { 
+                                var patientFullAddressOrdinal = reader.GetOrdinal("PatientFullAddress"); 
+                                patientFullAddressValue = reader.IsDBNull(patientFullAddressOrdinal) ? null : reader.GetString(patientFullAddressOrdinal); 
+                                if (string.IsNullOrWhiteSpace(patientFullAddressValue)) patientFullAddressValue = null; 
+                                patientFullAddressType = reader.GetDataTypeName(patientFullAddressOrdinal);
+                            } catch { 
+                                patientFullAddressValue = null; 
+                                patientFullAddressType = "Unknown";
                             }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"  PatientFullAddress: Not found in result set - {ex.Message}");
-                            }
+                            Console.WriteLine($"  PatientFullAddress: {patientFullAddressValue} (Type: {patientFullAddressType})");
                             
                             var header = new PatientLabTestHeader
                             {
@@ -1244,9 +1307,9 @@ namespace LabTestApi.Services
                                 DateTime statusChangeDateTimeValue = DateTime.MinValue;
                                 try
                                 {
-                                    var statusChangeDateTimeOrdinal = reader.GetOrdinal("StatusChangeDateTime");
+                                var statusChangeDateTimeOrdinal = reader.GetOrdinal("StatusChangeDateTime");
                                     statusChangeDateTimeValue = reader.IsDBNull(statusChangeDateTimeOrdinal) ? DateTime.MinValue : reader.GetDateTime(statusChangeDateTimeOrdinal);
-                                    Console.WriteLine($"  StatusChangeDateTime: {statusChangeDateTimeValue} (Type: {reader.GetDataTypeName(statusChangeDateTimeOrdinal)})");
+                                Console.WriteLine($"  StatusChangeDateTime: {statusChangeDateTimeValue} (Type: {reader.GetDataTypeName(statusChangeDateTimeOrdinal)})");
                                 }
                                 catch (Exception ex)
                                 {
@@ -1258,9 +1321,9 @@ namespace LabTestApi.Services
                                 string? appointmentIDValue = null;
                                 try
                                 {
-                                    var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
+                                var appointmentIDOrdinal = reader.GetOrdinal("AppointmentID");
                                     appointmentIDValue = GetNullableInt32(reader, "AppointmentID")?.ToString();
-                                    Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
+                                Console.WriteLine($"  AppointmentID: {appointmentIDValue} (Type: {reader.GetDataTypeName(appointmentIDOrdinal)})");
                                 }
                                 catch (Exception ex)
                                 {
@@ -1459,7 +1522,7 @@ namespace LabTestApi.Services
                                 
                                 // OnsetDate
                                 var onsetDateOrdinal = reader.GetOrdinal("OnsetDate");
-                                var onsetDateValue = GetNullableDateTime(reader, "OnsetDate");
+                                var onsetDateValue = GetNullableDateTimeSafe(reader, "OnsetDate");
                                 Console.WriteLine($"  OnsetDate: {onsetDateValue} (Type: {reader.GetDataTypeName(onsetDateOrdinal)})");
                                 
                                 // AllergyTypeID
@@ -1529,7 +1592,7 @@ namespace LabTestApi.Services
                                 
                                 // InsertedAt
                                 var insertedAtOrdinal = reader.GetOrdinal("InsertedAt");
-                                var insertedAtValue = GetNullableDateTime(reader, "InsertedAt");
+                                var insertedAtValue = GetNullableDateTimeSafe(reader, "InsertedAt");
                                 Console.WriteLine($"  InsertedAt: {insertedAtValue} (Type: {reader.GetDataTypeName(insertedAtOrdinal)})");
                                 
                                 // AllergyType
@@ -1638,7 +1701,7 @@ namespace LabTestApi.Services
                                 
                                 // DiagnosisDate
                                 var diagnosisDateOrdinal = reader.GetOrdinal("DiagnosisDate");
-                                var diagnosisDateValue = GetNullableDateTime(reader, "DiagnosisDate");
+                                var diagnosisDateValue = GetNullableDateTimeSafe(reader, "DiagnosisDate");
                                 Console.WriteLine($"  DiagnosisDate: {diagnosisDateValue} (Type: {reader.GetDataTypeName(diagnosisDateOrdinal)})");
                                 
                                 // DiagnosisBy
@@ -1698,7 +1761,7 @@ namespace LabTestApi.Services
                                 
                                 // OnSetDate
                                 var onSetDateOrdinal = reader.GetOrdinal("OnSetDate");
-                                var onSetDateValue = GetNullableDateTime(reader, "OnSetDate");
+                                var onSetDateValue = GetNullableDateTimeSafe(reader, "OnSetDate");
                                 Console.WriteLine($"  OnSetDate: {onSetDateValue} (Type: {reader.GetDataTypeName(onSetDateOrdinal)})");
                                 
                                 // MappedBy
@@ -1708,7 +1771,7 @@ namespace LabTestApi.Services
                                 
                                 // MappedDate
                                 var mappedDateOrdinal = reader.GetOrdinal("MappedDate");
-                                var mappedDateValue = GetNullableDateTime(reader, "MappedDate");
+                                var mappedDateValue = GetNullableDateTimeSafe(reader, "MappedDate");
                                 Console.WriteLine($"  MappedDate: {mappedDateValue} (Type: {reader.GetDataTypeName(mappedDateOrdinal)})");
                                 
                                 // IsStopped
@@ -1977,7 +2040,7 @@ namespace LabTestApi.Services
                                 
                                 // OnsetDate
                                 var onsetDateOrdinal = reader.GetOrdinal("OnsetDate");
-                                var onsetDateValue = GetNullableDateTime(reader, "OnsetDate");
+                                var onsetDateValue = GetNullableDateTimeSafe(reader, "OnsetDate");
                                 Console.WriteLine($"  OnsetDate: {onsetDateValue} (Type: {reader.GetDataTypeName(onsetDateOrdinal)})");
                                 
                                 // AllergyTypeID
@@ -2047,7 +2110,7 @@ namespace LabTestApi.Services
                                 
                                 // InsertedAt
                                 var insertedAtOrdinal = reader.GetOrdinal("InsertedAt");
-                                var insertedAtValue = GetNullableDateTime(reader, "InsertedAt");
+                                var insertedAtValue = GetNullableDateTimeSafe(reader, "InsertedAt");
                                 Console.WriteLine($"  InsertedAt: {insertedAtValue} (Type: {reader.GetDataTypeName(insertedAtOrdinal)})");
                                 
                                 // AllergyType
@@ -2190,7 +2253,7 @@ namespace LabTestApi.Services
                                 
                                 // DiagnosisDate
                                 var diagnosisDateOrdinal = reader.GetOrdinal("DiagnosisDate");
-                                var diagnosisDateValue = GetNullableDateTime(reader, "DiagnosisDate");
+                                var diagnosisDateValue = GetNullableDateTimeSafe(reader, "DiagnosisDate");
                                 Console.WriteLine($"  DiagnosisDate: {diagnosisDateValue} (Type: {reader.GetDataTypeName(diagnosisDateOrdinal)})");
                                 
                                 // DiagnosisBy
@@ -2250,7 +2313,7 @@ namespace LabTestApi.Services
                                 
                                 // OnSetDate
                                 var onSetDateOrdinal = reader.GetOrdinal("OnSetDate");
-                                var onSetDateValue = GetNullableDateTime(reader, "OnSetDate");
+                                var onSetDateValue = GetNullableDateTimeSafe(reader, "OnSetDate");
                                 Console.WriteLine($"  OnSetDate: {onSetDateValue} (Type: {reader.GetDataTypeName(onSetDateOrdinal)})");
                                 
                                 // MappedBy
@@ -2260,7 +2323,7 @@ namespace LabTestApi.Services
                                 
                                 // MappedDate
                                 var mappedDateOrdinal = reader.GetOrdinal("MappedDate");
-                                var mappedDateValue = GetNullableDateTime(reader, "MappedDate");
+                                var mappedDateValue = GetNullableDateTimeSafe(reader, "MappedDate");
                                 Console.WriteLine($"  MappedDate: {mappedDateValue} (Type: {reader.GetDataTypeName(mappedDateOrdinal)})");
                                 
                                 // IsStopped
@@ -2366,26 +2429,26 @@ namespace LabTestApi.Services
                             {
                                 var observation = new PatientLabObservation
                                 {
-                                    LabTestOBRID = reader.GetInt32(reader.GetOrdinal("LabTestOBRID")),
-                                    SnomedCode = GetNullableString(reader, "SnomedCode"),
-                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
-                                    PanelType = GetNullableString(reader, "PanelType"),
-                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
-                                    StatusChangeDateTime = GetNullableDateTime(reader, "StatusChangeDateTime"),
-                                    AppointmentID = GetNullableInt32(reader, "AppointmentID")?.ToString(),
-                                    LabTestOBXID = reader.GetInt32(reader.GetOrdinal("LabTestOBXID")),
-                                    SnomedCode_2 = GetNullableString(reader, "SnomedCode_2"),
-                                    ResultName = GetNullableString(reader, "ResultName"),
-                                    ObservationCodingSystem = GetNullableString(reader, "ObservationCodingSystem"),
-                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
-                                    Units = GetNullableString(reader, "Units"),
-                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
-                                    AbnormalFlagID = GetNullableInt32(reader, "AbnormalFlagID"),
-                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDesc"),
-                                    LabTestNTEID = reader.IsDBNull(reader.GetOrdinal("LabTestNTEID")) ? null : reader.GetInt32(reader.GetOrdinal("LabTestNTEID")),
-                                    Source = GetNullableString(reader, "Source"),
-                                    Comments = GetNullableString(reader, "Comments"),
-                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID"))
+                                    LabTestOBRID = GetFirstAvailableInt32(reader, "LabTestOBRID", "labtestobrid") ?? 0,
+                                    SnomedCode = GetFirstAvailableString(reader, "SnomedCode", "snomedcode"),
+                                    MessageSubject = GetFirstAvailableString(reader, "MessageSubject", "USDescription", "messagesubject", "usdescription"),
+                                    PanelType = GetFirstAvailableString(reader, "PanelType", "paneltype", "USCode"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime"),
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime"),
+                                    AppointmentID = GetFirstAvailableInt32(reader, "AppointmentID", "appointmentid")?.ToString(),
+                                    LabTestOBXID = GetFirstAvailableInt32(reader, "LabTestOBXID", "labtestobxid") ?? 0,
+                                    SnomedCode_2 = GetFirstAvailableString(reader, "SnomedCode_2", "snomedcode_2", "ObservationIdentifier"),
+                                    ResultName = GetFirstAvailableString(reader, "ResultName", "resultname", "ObservationText"),
+                                    ObservationCodingSystem = GetFirstAvailableString(reader, "ObservationCodingSystem", "observationcodingsystem"),
+                                    ObservationValue = GetFirstAvailableString(reader, "ObservationValue", "observationvalue"),
+                                    Units = GetFirstAvailableString(reader, "Units", "units"),
+                                    ReferenceRanges = GetFirstAvailableString(reader, "ReferenceRanges", "referenceranges"),
+                                    AbnormalFlagID = GetFirstAvailableInt32(reader, "AbnormalFlagID", "abnormalflagid"),
+                                    AbnormalFlagDesc = GetFirstAvailableString(reader, "AbnormalFlagDesc", "abnormalflagdesc"),
+                                    LabTestNTEID = GetFirstAvailableInt32(reader, "LabTestNTEID", "labtestnteid"),
+                                    Source = GetFirstAvailableString(reader, "Source", "source"),
+                                    Comments = GetFirstAvailableString(reader, "Comments", "comments"),
+                                    PriorityID = GetFirstAvailableInt32(reader, "PriorityID", "priorityid") ?? 0
                                 };
                                 
                                 observations.Add(observation);
@@ -2447,8 +2510,8 @@ namespace LabTestApi.Services
                                     SnomedCode = GetNullableString(reader, "SnomedCode"),
                                     MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     PanelType = GetNullableString(reader, "PanelType"),
-                                    ObservationDateTime = GetNullableDateTime(reader, "ObservationDateTime"),
-                                    StatusChangeDateTime = GetNullableDateTime(reader, "StatusChangeDateTime"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime"),
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime"),
                                     AppointmentID = GetNullableInt32(reader, "AppointmentID"),
                                     LabTestOBXID = reader.GetInt32(reader.GetOrdinal("LabTestOBXID")),
                                     SnomedCode_2 = GetNullableString(reader, "SnomedCode_2"),
@@ -2526,8 +2589,8 @@ namespace LabTestApi.Services
                                 {
                                     PatientID = reader.GetInt32(reader.GetOrdinal("PatientID")),
                                     MedicationID = reader.GetInt32(reader.GetOrdinal("MedicationID")),
-                                    LastRXDate = GetNullableDateTime(reader, "LastRXDate"),
-                                    StartDate = GetNullableDateTime(reader, "StartDate"),
+                                    LastRXDate = GetNullableDateTimeSafe(reader, "LastRXDate"),
+                                    StartDate = GetNullableDateTimeSafe(reader, "StartDate"),
                                     ProviderName = GetNullableString(reader, "ProviderName"),
                                     MedicineName = GetNullableString(reader, "MedicineName"),
                                     Take = GetNullableString(reader, "Take"),
@@ -2755,6 +2818,52 @@ namespace LabTestApi.Services
             Console.WriteLine($"❌ Error getting individual lab test data: {ex.Message}");
             return new List<LabTestData>();
         }
+    }
+
+    // Helper to get first available string column by trying multiple names
+    private string? GetFirstAvailableString(SqlDataReader reader, params string[] columnNames)
+    {
+        foreach (var name in columnNames)
+        {
+            try
+            {
+                var ordinal = reader.GetOrdinal(name);
+                if (!reader.IsDBNull(ordinal))
+                {
+                    return reader.GetString(ordinal);
+                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // column not found, try next
+            }
+        }
+        return null;
+    }
+
+    // Helper to get first available int? by trying multiple names and tolerant conversions
+    private int? GetFirstAvailableInt32(SqlDataReader reader, params string[] columnNames)
+    {
+        foreach (var name in columnNames)
+        {
+            try
+            {
+                var value = GetNullableInt32(reader, name);
+                if (value.HasValue)
+                {
+                    return value;
+                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // column not found, try next
+            }
+            catch
+            {
+                // ignore conversion issues and try next
+            }
+        }
+        return null;
     }
 }
 }
