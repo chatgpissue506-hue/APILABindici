@@ -335,5 +335,85 @@ namespace LabTestApi.Controllers
                 return StatusCode(500, new { error = "An error occurred while retrieving lab test data", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Get incomplete high priority lab results
+        /// </summary>
+        /// <returns>List of incomplete high priority lab results</returns>
+        [HttpGet("incomplete-high-priority")]
+        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetIncompleteHighLabResults()
+        {
+            try
+            {
+                var result = await _labTestService.GetIncompleteHighLabResultsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving incomplete high priority lab results", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get incomplete low priority lab results
+        /// </summary>
+        /// <returns>List of incomplete low priority lab results</returns>
+        [HttpGet("incomplete-low-priority")]
+        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetIncompleteLowLabResults()
+        {
+            try
+            {
+                var result = await _labTestService.GetIncompleteLowLabResultsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving incomplete low priority lab results", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get complete high priority lab results
+        /// </summary>
+        /// <returns>List of complete high priority lab results</returns>
+        [HttpGet("complete-high-priority")]
+        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetCompleteHighLabResults()
+        {
+            try
+            {
+                var result = await _labTestService.GetCompleteHighLabResultsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving complete high priority lab results", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get complete low priority lab results
+        /// </summary>
+        /// <returns>List of complete low priority lab results</returns>
+        [HttpGet("complete-low-priority")]
+        [ProducesResponseType(typeof(IEnumerable<LabTestData>), 200)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<LabTestData>>> GetCompleteLowLabResults()
+        {
+            try
+            {
+                var result = await _labTestService.GetCompleteLowLabResultsAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving complete low priority lab results", details = ex.Message });
+            }
+        }
     }
 }

@@ -2085,7 +2085,7 @@ namespace LabTestApi.Services
                                 
                                 // Reaction
                                 var reactionOrdinal = reader.GetOrdinal("Reaction");
-                                var reactionValue = reader.IsDBNull(reactionOrdinal) ? null : reader.GetString(reactionOrdinal);
+                                var reactionValue = GetNullableString(reader, "Reaction");
                                 Console.WriteLine($"  Reaction: {reactionValue} (Type: {reader.GetDataTypeName(reactionOrdinal)})");
                                 
                                 // IsActive
@@ -2433,8 +2433,8 @@ namespace LabTestApi.Services
                                     SnomedCode = GetFirstAvailableString(reader, "SnomedCode", "snomedcode"),
                                     MessageSubject = GetFirstAvailableString(reader, "MessageSubject", "USDescription", "messagesubject", "usdescription"),
                                     PanelType = GetFirstAvailableString(reader, "PanelType", "paneltype", "USCode"),
-                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime"),
-                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
                                     AppointmentID = GetFirstAvailableInt32(reader, "AppointmentID", "appointmentid")?.ToString(),
                                     LabTestOBXID = GetFirstAvailableInt32(reader, "LabTestOBXID", "labtestobxid") ?? 0,
                                     SnomedCode_2 = GetFirstAvailableString(reader, "SnomedCode_2", "snomedcode_2", "ObservationIdentifier"),
@@ -2510,8 +2510,8 @@ namespace LabTestApi.Services
                                     SnomedCode = GetNullableString(reader, "SnomedCode"),
                                     MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     PanelType = GetNullableString(reader, "PanelType"),
-                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime"),
-                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
                                     AppointmentID = GetNullableInt32(reader, "AppointmentID"),
                                     LabTestOBXID = reader.GetInt32(reader.GetOrdinal("LabTestOBXID")),
                                     SnomedCode_2 = GetNullableString(reader, "SnomedCode_2"),
@@ -2864,6 +2864,311 @@ namespace LabTestApi.Services
             }
         }
         return null;
+    }
+
+    // Priority-based lab results methods
+    public async Task<IEnumerable<LabTestData>> GetIncompleteHighLabResultsAsync()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine("🔍 Getting incomplete high priority lab results...");
+                
+                using (var command = new SqlCommand("[dbo].[usp_GetIncompleteHighLabResults]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    
+                    var labTestDataList = new List<LabTestData>();
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var labTestDataItem = new LabTestData
+                                {
+                                    LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
+                                    SendingApplication = GetNullableString(reader, "SendingApplication"),
+                                    SendingFacility = GetNullableString(reader, "SendingFacility"),
+                                    ReceivingFacility = GetNullableString(reader, "ReceivingFacility"),
+                                    MessageDatetime = reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
+                                    NHINumber = GetNullableString(reader, "NHINumber"),
+                                    FullName = GetNullableString(reader, "FullName"),
+                                    DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                                    GenderName = GetNullableString(reader, "GenderName"),
+                                    PatientID = GetNullableString(reader, "PatientID"),
+                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
+                                    MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
+                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
+                                    ResultName = GetNullableString(reader, "resultName"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
+                                    ProviderFullName = GetNullableString(reader, "ProviderFullName"),
+                                    OrgName = GetNullableString(reader, "OrgName"),
+                                    FolderName = GetNullableString(reader, "FolderName")
+                                };
+                                
+                                labTestDataList.Add(labTestDataItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading incomplete high lab result data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine($"✅ Retrieved {labTestDataList.Count} incomplete high priority lab result records");
+                    return labTestDataList;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting incomplete high lab results: {ex.Message}");
+            return new List<LabTestData>();
+        }
+    }
+
+    public async Task<IEnumerable<LabTestData>> GetIncompleteLowLabResultsAsync()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine("🔍 Getting incomplete low priority lab results...");
+                
+                using (var command = new SqlCommand("[dbo].[usp_GetIncompleteLowLabResults]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    
+                    var labTestDataList = new List<LabTestData>();
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var labTestDataItem = new LabTestData
+                                {
+                                    LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
+                                    SendingApplication = GetNullableString(reader, "SendingApplication"),
+                                    SendingFacility = GetNullableString(reader, "SendingFacility"),
+                                    ReceivingFacility = GetNullableString(reader, "ReceivingFacility"),
+                                    MessageDatetime = reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
+                                    NHINumber = GetNullableString(reader, "NHINumber"),
+                                    FullName = GetNullableString(reader, "FullName"),
+                                    DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                                    GenderName = GetNullableString(reader, "GenderName"),
+                                    PatientID = GetNullableString(reader, "PatientID"),
+                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
+                                    MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
+                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
+                                    ResultName = GetNullableString(reader, "resultName"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
+                                    ProviderFullName = GetNullableString(reader, "ProviderFullName"),
+                                    OrgName = GetNullableString(reader, "OrgName"),
+                                    FolderName = GetNullableString(reader, "FolderName")
+                                };
+                                
+                                labTestDataList.Add(labTestDataItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading incomplete low lab result data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine($"✅ Retrieved {labTestDataList.Count} incomplete low priority lab result records");
+                    return labTestDataList;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting incomplete low lab results: {ex.Message}");
+            return new List<LabTestData>();
+        }
+    }
+
+    public async Task<IEnumerable<LabTestData>> GetCompleteHighLabResultsAsync()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine("🔍 Getting complete high priority lab results...");
+                
+                using (var command = new SqlCommand("[dbo].[usp_GetCompleteHighLabResults]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    
+                    var labTestDataList = new List<LabTestData>();
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var labTestDataItem = new LabTestData
+                                {
+                                    LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
+                                    SendingApplication = GetNullableString(reader, "SendingApplication"),
+                                    SendingFacility = GetNullableString(reader, "SendingFacility"),
+                                    ReceivingFacility = GetNullableString(reader, "ReceivingFacility"),
+                                    MessageDatetime = reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
+                                    NHINumber = GetNullableString(reader, "NHINumber"),
+                                    FullName = GetNullableString(reader, "FullName"),
+                                    DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                                    GenderName = GetNullableString(reader, "GenderName"),
+                                    PatientID = GetNullableString(reader, "PatientID"),
+                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
+                                    MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
+                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
+                                    ResultName = GetNullableString(reader, "resultName"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
+                                    ProviderFullName = GetNullableString(reader, "ProviderFullName"),
+                                    OrgName = GetNullableString(reader, "OrgName"),
+                                    FolderName = GetNullableString(reader, "FolderName")
+                                };
+                                
+                                labTestDataList.Add(labTestDataItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading complete high lab result data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine($"✅ Retrieved {labTestDataList.Count} complete high priority lab result records");
+                    return labTestDataList;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting complete high lab results: {ex.Message}");
+            return new List<LabTestData>();
+        }
+    }
+
+    public async Task<IEnumerable<LabTestData>> GetCompleteLowLabResultsAsync()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine("🔍 Getting complete low priority lab results...");
+                
+                using (var command = new SqlCommand("[dbo].[usp_GetCompleteLowLabResults]", connection))
+                {
+                    command.CommandType = System.Data.CommandType.StoredProcedure;
+                    
+                    var labTestDataList = new List<LabTestData>();
+                    
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            try
+                            {
+                                var labTestDataItem = new LabTestData
+                                {
+                                    LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
+                                    SendingApplication = GetNullableString(reader, "SendingApplication"),
+                                    SendingFacility = GetNullableString(reader, "SendingFacility"),
+                                    ReceivingFacility = GetNullableString(reader, "ReceivingFacility"),
+                                    MessageDatetime = reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
+                                    NHINumber = GetNullableString(reader, "NHINumber"),
+                                    FullName = GetNullableString(reader, "FullName"),
+                                    DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                                    GenderName = GetNullableString(reader, "GenderName"),
+                                    PatientID = GetNullableString(reader, "PatientID"),
+                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
+                                    MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
+                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
+                                    StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
+                                    ResultName = GetNullableString(reader, "resultName"),
+                                    ObservationValue = GetNullableString(reader, "ObservationValue"),
+                                    Units = GetNullableString(reader, "Units"),
+                                    ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
+                                    AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
+                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    Comments = GetNullableString(reader, "Comments"),
+                                    PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
+                                    ProviderFullName = GetNullableString(reader, "ProviderFullName"),
+                                    OrgName = GetNullableString(reader, "OrgName"),
+                                    FolderName = GetNullableString(reader, "FolderName")
+                                };
+                                
+                                labTestDataList.Add(labTestDataItem);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"❌ Error reading complete low lab result data: {ex.Message}");
+                                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                            }
+                        }
+                    }
+                    
+                    Console.WriteLine($"✅ Retrieved {labTestDataList.Count} complete low priority lab result records");
+                    return labTestDataList;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting complete low lab results: {ex.Message}");
+            return new List<LabTestData>();
+        }
     }
 }
 }
