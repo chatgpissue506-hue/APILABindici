@@ -2482,7 +2482,7 @@ namespace LabTestApi.Services
                         DocumentTypeID = reader.GetInt32(reader.GetOrdinal("DocumentTypeID")),
                         DocumentName = GetNullableStringSafe(reader, "DocumentName"),
                         Description = GetNullableStringSafe(reader, "Description"),
-                        IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted")),
+                        
                         DocumentType = GetNullableStringSafe(reader, "DocumentType"),
                         DocumentBytes = reader.IsDBNull(reader.GetOrdinal("DocumentData")) ? null : (byte[])reader["DocumentData"]
                     };

@@ -356,13 +356,14 @@ namespace LabTestApi.Controllers
         }
 
         /// <summary>
-        /// Get document data by document key and practice ID using uspDocumentGetByDocumentKey stored procedure
+        /// Get document data by document key and practice ID using uspDocumentGetByDocumentKey stored procedure.
+        /// Returns Base64 and extracted text where applicable.
         /// </summary>
         [HttpGet("document/{documentKey}")]
-        [ProducesResponseType(typeof(IEnumerable<DocumentData>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<DocumentResultDto>), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult<IEnumerable<DocumentData>>> GetDocumentByKey(string documentKey, [FromQuery] int practiceID)
+        public async Task<ActionResult<IEnumerable<DocumentResultDto>>> GetDocumentByKey(string documentKey, [FromQuery] int practiceID)
         {
             try
             {
@@ -376,8 +377,20 @@ namespace LabTestApi.Controllers
                     return BadRequest(new { error = "Valid Practice ID is required" });
                 }
 
-                var result = await _labTestService.GetDocumentByDocumentKeyAsync(documentKey, practiceID);
-                return Ok(result);
+                var docs = await _labTestService.GetDocumentByDocumentKeyAsync(documentKey, practiceID);
+                var results = docs.Select(d => new DocumentResultDto
+                {
+                    DocumentID = d.DocumentID,
+                    DocumentTypeID = d.DocumentTypeID,
+                    DocumentName = d.DocumentName,
+                    Description = d.Description,
+                    IsDeleted = d.IsDeleted,
+                    DocumentType = d.DocumentType,
+                    DocumentBase64 = d.DocumentBytes != null ? Convert.ToBase64String(d.DocumentBytes) : null,
+                    DocumentText = LabTestApi.Services.DocumentContentHelper.ExtractText(d.DocumentBytes, d.DocumentType)
+                }).ToList();
+
+                return Ok(results);
             }
             catch (Exception ex)
             {
@@ -452,6 +465,47 @@ namespace LabTestApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "An error occurred while updating inbox folder item", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get documents by document key and practiceID; returns Base64 and extracted text when possible
+        /// </summary>
+        [HttpPost("document")]
+        [ProducesResponseType(typeof(IEnumerable<DocumentResultDto>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<DocumentResultDto>>> GetDocuments([FromBody] DocumentRequest request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.DocumentKey))
+                {
+                    return BadRequest(new { error = "DocumentKey is required" });
+                }
+                if (request.PracticeID <= 0)
+                {
+                    return BadRequest(new { error = "Valid PracticeID is required" });
+                }
+
+                var docs = await _labTestService.GetDocumentByDocumentKeyAsync(request.DocumentKey, request.PracticeID);
+                var results = docs.Select(d => new DocumentResultDto
+                {
+                    DocumentID = d.DocumentID,
+                    DocumentTypeID = d.DocumentTypeID,
+                    DocumentName = d.DocumentName,
+                    Description = d.Description,
+                    IsDeleted = d.IsDeleted,
+                    DocumentType = d.DocumentType,
+                    DocumentBase64 = d.DocumentBytes != null ? Convert.ToBase64String(d.DocumentBytes) : null,
+                    DocumentText = LabTestApi.Services.DocumentContentHelper.ExtractText(d.DocumentBytes, d.DocumentType)
+                }).ToList();
+
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving documents", details = ex.Message });
             }
         }
 
