@@ -387,7 +387,8 @@ namespace LabTestApi.Controllers
                     IsDeleted = d.IsDeleted,
                     DocumentType = d.DocumentType,
                     DocumentBase64 = d.DocumentBytes != null ? Convert.ToBase64String(d.DocumentBytes) : null,
-                    DocumentText = LabTestApi.Services.DocumentContentHelper.ExtractText(d.DocumentBytes, d.DocumentType)
+                    DocumentText = LabTestApi.Services.DocumentContentHelper.ExtractText(d.DocumentBytes, d.DocumentType),
+                    InboxFolderItemID = d.InboxFolderItemID
                 }).ToList();
 
                 return Ok(results);

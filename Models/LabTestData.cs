@@ -46,5 +46,6 @@ namespace LabTestApi.Models
         public DateTime? PrevDate { get; set; }
         public string? OBResultStatus { get; set; }
         public string? ResultCategory { get; set; }
+        public int? InboxFolderItemID { get; set; }
     }
 }

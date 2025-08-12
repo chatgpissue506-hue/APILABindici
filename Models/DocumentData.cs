@@ -11,6 +11,7 @@ namespace LabTestApi.Models
         public bool IsDeleted { get; set; }
         public string? DocumentType { get; set; }
         public byte[]? DocumentBytes { get; set; }
+        public int? InboxFolderItemID { get; set; }
     }
 
     public class DocumentRequest

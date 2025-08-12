@@ -355,6 +355,9 @@ namespace LabTestApi.Services
                                     case "foldername":
                                         labTestDataItem.FolderName = value.ToString();
                                         break;
+                                    case "inboxfolderitemid":
+                                        labTestDataItem.InboxFolderItemID = Convert.ToInt32(value);
+                                        break;
                                 }
                             }
                             
@@ -661,6 +664,9 @@ namespace LabTestApi.Services
                                     case "foldername":
                                         labTestDataItem.FolderName = value.ToString();
                                         break;
+                                    case "inboxfolderitemid":
+                                        labTestDataItem.InboxFolderItemID = Convert.ToInt32(value);
+                                        break;
                                 }
                             }
                             
@@ -876,6 +882,9 @@ namespace LabTestApi.Services
                                         break;
                                     case "foldername":
                                         labTestDataItem.FolderName = value?.ToString();
+                                        break;
+                                    case "inboxfolderitemid":
+                                        labTestDataItem.InboxFolderItemID = Convert.ToInt32(value);
                                         break;
                                 }
                             }
@@ -2438,7 +2447,8 @@ namespace LabTestApi.Services
                         IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
                         InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
                         OrgName = GetNullableStringSafe(reader, "OrgName"),
-                        FolderName = GetNullableStringSafe(reader, "FolderName")
+                        FolderName = GetNullableStringSafe(reader, "FolderName"),
+                        InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                     };
                     results.Add(item);
                 }
@@ -2484,7 +2494,8 @@ namespace LabTestApi.Services
                         Description = GetNullableStringSafe(reader, "Description"),
                         
                         DocumentType = GetNullableStringSafe(reader, "DocumentType"),
-                        DocumentBytes = reader.IsDBNull(reader.GetOrdinal("DocumentData")) ? null : (byte[])reader["DocumentData"]
+                        DocumentBytes = reader.IsDBNull(reader.GetOrdinal("DocumentData")) ? null : (byte[])reader["DocumentData"],
+                        InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                     };
                     results.Add(item);
                 }
@@ -2896,6 +2907,9 @@ namespace LabTestApi.Services
                                             break;
                                         case "foldername":
                                             labTestDataItem.FolderName = value?.ToString();
+                                            break;
+                                        case "inboxfolderitemid":
+                                            labTestDataItem.InboxFolderItemID = Convert.ToInt32(value);
                                             break;
                                     }
                                 }

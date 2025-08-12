@@ -12,5 +12,6 @@ namespace LabTestApi.Models
         public string? DocumentType { get; set; }
         public string? DocumentBase64 { get; set; }
         public string? DocumentText { get; set; }
+        public int? InboxFolderItemID { get; set; }
     }
 }

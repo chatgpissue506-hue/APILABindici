@@ -24,5 +24,6 @@ namespace LabTestApi.Models
         public DateTime InboxReceivedDate { get; set; }
         public string? OrgName { get; set; }
         public string? FolderName { get; set; }
+        public int? InboxFolderItemID { get; set; }
     }
 }
