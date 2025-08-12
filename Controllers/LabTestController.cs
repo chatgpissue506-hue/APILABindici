@@ -337,6 +337,55 @@ namespace LabTestApi.Controllers
         }
 
         /// <summary>
+        /// Get referrals test data using GetReferralsTestDataWithJoins stored procedure
+        /// </summary>
+        [HttpGet("referrals")]
+        [ProducesResponseType(typeof(IEnumerable<ReferralTestData>), 200)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<ReferralTestData>>> GetReferrals()
+        {
+            try
+            {
+                var result = await _labTestService.GetReferralsTestDataAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving referrals", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get document data by document key and practice ID using uspDocumentGetByDocumentKey stored procedure
+        /// </summary>
+        [HttpGet("document/{documentKey}")]
+        [ProducesResponseType(typeof(IEnumerable<DocumentData>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<IEnumerable<DocumentData>>> GetDocumentByKey(string documentKey, [FromQuery] int practiceID)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(documentKey))
+                {
+                    return BadRequest(new { error = "Document key is required" });
+                }
+
+                if (practiceID <= 0)
+                {
+                    return BadRequest(new { error = "Valid Practice ID is required" });
+                }
+
+                var result = await _labTestService.GetDocumentByDocumentKeyAsync(documentKey, practiceID);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while retrieving document data", details = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Get incomplete high priority lab results
         /// </summary>
         /// <returns>List of incomplete high priority lab results</returns>

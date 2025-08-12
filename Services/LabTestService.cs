@@ -83,9 +83,17 @@ namespace LabTestApi.Services
         private string? GetNullableString(SqlDataReader reader, string columnName)
         {
             try
-        {
-            var ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                if (reader.IsDBNull(ordinal)) return null;
+                var value = reader.GetValue(ordinal);
+                return value?.ToString();
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Column missing
+                Console.WriteLine($"⚠️ Column '{columnName}' not found in result set, using null");
+                return null;
             }
             catch (Exception ex)
             {
@@ -99,39 +107,31 @@ namespace LabTestApi.Services
             try
             {
                 var ordinal = reader.GetOrdinal(columnName);
-                var value = reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
-                
-                // Special handling for MedicationCategory - return 'Low' if null or not found
-                if (columnName == "MedicationCategory" && string.IsNullOrEmpty(value))
+                if (reader.IsDBNull(ordinal)) return null;
+                var value = reader.GetValue(ordinal);
+                var stringValue = value?.ToString();
+                if (columnName == "MedicationCategory" && string.IsNullOrEmpty(stringValue))
                 {
                     return "Low";
                 }
-                
-                return value;
+                return stringValue;
             }
             catch (IndexOutOfRangeException)
             {
-                // Column doesn't exist in the result set
                 Console.WriteLine($"⚠️ Column '{columnName}' not found in result set, using null");
-                
-                // Special handling for MedicationCategory - return 'Low' if column not found
                 if (columnName == "MedicationCategory")
                 {
                     return "Low";
                 }
-                
                 return null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error reading column '{columnName}': {ex.Message}");
-                
-                // Special handling for MedicationCategory - return 'Low' on error
                 if (columnName == "MedicationCategory")
                 {
                     return "Low";
                 }
-                
                 return null;
             }
         }
@@ -284,10 +284,10 @@ namespace LabTestApi.Services
                                         labTestDataItem.MarkasRead = Convert.ToBoolean(value);
                                         break;
                                     case "ifiinboxupdate":
-                                        labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                        labTestDataItem.IFIInboxUpdate = Convert.ToDateTime(value);
                                         break;
                                     case "inboxrecevieddate":
-                                        labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                        labTestDataItem.InboxReceivedDate = Convert.ToDateTime(value);
                                         break;
                                     case "labtestobrid":
                                         labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
@@ -296,7 +296,7 @@ namespace LabTestApi.Services
                                         labTestDataItem.SnomedCode = value.ToString();
                                         break;
                                     case "mesagesubject":
-                                        labTestDataItem.MesageSubject = value.ToString();
+                                        labTestDataItem.MessageSubject = value.ToString();
                                         break;
                                     case "observationdatetime":
                                         labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
@@ -332,7 +332,7 @@ namespace LabTestApi.Services
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
                                     case "abnormalflagdesc":
-                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
+                                        labTestDataItem.AbnormalFlagDescription = value.ToString();
                                         break;
                                     case "labtestnteid":
                                         labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
@@ -407,7 +407,7 @@ namespace LabTestApi.Services
                     MarkasRead = false,
                     LabTestOBRID = 1,
                     SnomedCode = "TEST001",
-                    MesageSubject = "Blood Test Results",
+                    MessageSubject = "Blood Test Results",
                     ObservationDateTime = DateTime.Now,
                     LabTestOBXID = 1,
                     ResultName = "Hemoglobin",
@@ -415,7 +415,7 @@ namespace LabTestApi.Services
                     Units = "g/dL",
                     ReferenceRanges = "12.0-16.0",
                     AbnormalFlagID = 0,
-                    AbnormalFlagDesc = "Normal",
+                    AbnormalFlagDescription = "Normal",
                     Source = "LAB",
                     Comments = "Normal result",
                     PriorityID = 3,
@@ -440,7 +440,7 @@ namespace LabTestApi.Services
                     MarkasRead = true,
                     LabTestOBRID = 2,
                     SnomedCode = "TEST002",
-                    MesageSubject = "Cholesterol Test",
+                    MessageSubject = "Cholesterol Test",
                     ObservationDateTime = DateTime.Now.AddDays(-1),
                     LabTestOBXID = 2,
                     ResultName = "Total Cholesterol",
@@ -448,7 +448,7 @@ namespace LabTestApi.Services
                     Units = "mg/dL",
                     ReferenceRanges = "<200",
                     AbnormalFlagID = 0,
-                    AbnormalFlagDesc = "Normal",
+                    AbnormalFlagDescription = "Normal",
                     Source = "LAB",
                     Comments = "Good cholesterol level",
                     PriorityID = 2,
@@ -498,7 +498,7 @@ namespace LabTestApi.Services
                             ifi.Resultdate as inboxrecevieddate,
                             obr.LabTestOBRID,
                             obr.USCode as SnomedCode,
-                            obr.USDescription As MesageSubject,
+                            obr.USDescription As MessageSubject,
                             obr.ObservationDateTime,
                             obr.StatusChangeDateTime,
                             obr.AppointmentID,
@@ -590,10 +590,10 @@ namespace LabTestApi.Services
                                         labTestDataItem.MarkasRead = Convert.ToBoolean(value);
                                         break;
                                     case "ifiinboxupdate":
-                                        labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                        labTestDataItem.IFIInboxUpdate = Convert.ToDateTime(value);
                                         break;
                                     case "inboxrecevieddate":
-                                        labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                        labTestDataItem.InboxReceivedDate = Convert.ToDateTime(value);
                                         break;
                                     case "labtestobrid":
                                         labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
@@ -602,7 +602,7 @@ namespace LabTestApi.Services
                                         labTestDataItem.SnomedCode = value.ToString();
                                         break;
                                     case "mesagesubject":
-                                        labTestDataItem.MesageSubject = value.ToString();
+                                        labTestDataItem.MessageSubject = value.ToString();
                                         break;
                                     case "observationdatetime":
                                         labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
@@ -638,7 +638,7 @@ namespace LabTestApi.Services
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
                                     case "abnormalflagdesc":
-                                        labTestDataItem.AbnormalFlagDesc = value.ToString();
+                                        labTestDataItem.AbnormalFlagDescription = value.ToString();
                                         break;
                                     case "labtestnteid":
                                         labTestDataItem.LabTestNTEID = Convert.ToInt32(value);
@@ -833,16 +833,16 @@ namespace LabTestApi.Services
                                         labTestDataItem.MarkasRead = Convert.ToBoolean(value);
                                         break;
                                     case "ifiinboxupdate":
-                                        labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                        labTestDataItem.IFIInboxUpdate = Convert.ToDateTime(value);
                                         break;
                                     case "inboxrecevieddate":
-                                        labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                        labTestDataItem.InboxReceivedDate = Convert.ToDateTime(value);
                                         break;
                                     case "usdescription":
-                                        labTestDataItem.MesageSubject = value.ToString();
+                                        labTestDataItem.MessageSubject = value.ToString();
                                         break;
                                     case "messagesubject":
-                                        labTestDataItem.MesageSubject = value.ToString();
+                                        labTestDataItem.MessageSubject = value.ToString();
                                         break;
                                     case "observationdatetime":
                                         labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
@@ -860,7 +860,7 @@ namespace LabTestApi.Services
                                         labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                         break;
                                     case "abnormalflagdesc":
-                                        labTestDataItem.AbnormalFlagDesc = value?.ToString();
+                                        labTestDataItem.AbnormalFlagDescription = value?.ToString();
                                         break;
                                     case "priorityid":
                                         labTestDataItem.PriorityID = Convert.ToInt32(value);
@@ -2398,6 +2398,108 @@ namespace LabTestApi.Services
         }
     }
 
+    public async Task<IEnumerable<ReferralTestData>> GetReferralsTestDataAsync()
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine("🔍 Getting referrals test data...");
+
+                using var command = new SqlCommand("[dbo].[GetReferralsTestDataWithJoins]", connection)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure,
+                    CommandTimeout = 90
+                };
+
+                var results = new List<ReferralTestData>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new ReferralTestData
+                    {
+                        LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
+                        SendingApplication = GetNullableStringSafe(reader, "SendingApplication"),
+                        SendingFacility = GetNullableStringSafe(reader, "SendingFacility"),
+                        ReceivingFacility = GetNullableStringSafe(reader, "ReceivingFacility"),
+                        MessageDatetime = reader.GetDateTime(reader.GetOrdinal("MessageDatetime")),
+                        NHINumber = GetNullableStringSafe(reader, "NHINumber"),
+                        VersionId = GetNullableStringSafe(reader, "versionid"),
+                        FullName = GetNullableStringSafe(reader, "FullName"),
+                        DMSID = GetNullableStringSafe(reader, "DMSID"),
+                        DMSIDKey = GetNullableStringSafe(reader, "DMSIDKey"),
+                        DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
+                        GenderName = GetNullableStringSafe(reader, "GenderName"),
+                        PatientID = GetNullableStringSafe(reader, "PatientID"),
+                        PracticeID = GetNullableStringSafe(reader, "PracticeID"),
+                        MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
+                        MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
+                        IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                        InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                        OrgName = GetNullableStringSafe(reader, "OrgName"),
+                        FolderName = GetNullableStringSafe(reader, "FolderName")
+                    };
+                    results.Add(item);
+                }
+
+                Console.WriteLine($"✅ Retrieved {results.Count} referral records");
+                return results;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting referrals: {ex.Message}");
+            return new List<ReferralTestData>();
+        }
+    }
+
+    public async Task<IEnumerable<DocumentData>> GetDocumentByDocumentKeyAsync(string documentKey, int practiceID)
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Getting document data for key: {documentKey}, PracticeID: {practiceID}");
+
+                using var command = new SqlCommand("[dbo].[uspDocumentGetByDocumentKey]", connection)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure,
+                    CommandTimeout = 90
+                };
+
+                command.Parameters.AddWithValue("@pDocumentKey", documentKey);
+                command.Parameters.AddWithValue("@pPracticeID", practiceID);
+
+                var results = new List<DocumentData>();
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var item = new DocumentData
+                    {
+                        DocumentID = reader.GetInt32(reader.GetOrdinal("DocumentID")),
+                        DocumentTypeID = reader.GetInt32(reader.GetOrdinal("DocumentTypeID")),
+                        DocumentName = GetNullableStringSafe(reader, "DocumentName"),
+                        Description = GetNullableStringSafe(reader, "Description"),
+                        IsDeleted = reader.GetBoolean(reader.GetOrdinal("IsDeleted")),
+                        DocumentType = GetNullableStringSafe(reader, "DocumentType"),
+                        DocumentBytes = reader.IsDBNull(reader.GetOrdinal("DocumentData")) ? null : (byte[])reader["DocumentData"]
+                    };
+                    results.Add(item);
+                }
+
+                Console.WriteLine($"✅ Retrieved {results.Count} document records");
+                return results;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error getting document data: {ex.Message}");
+            return new List<DocumentData>();
+        }
+    }
+
     public async Task<List<PatientLabObservation>> GetPatientLabObservationsAsync(int patientId, string? observationText = null, int? practiceId = null)
     {
         var observations = new List<PatientLabObservation>();
@@ -2724,10 +2826,10 @@ namespace LabTestApi.Services
                                             labTestDataItem.MarkasRead = Convert.ToBoolean(value);
                                             break;
                                         case "ifiinboxupdate":
-                                            labTestDataItem.ifiinboxupdate = Convert.ToDateTime(value);
+                                            labTestDataItem.IFIInboxUpdate = Convert.ToDateTime(value);
                                             break;
                                         case "inboxrecevieddate":
-                                            labTestDataItem.inboxrecevieddate = Convert.ToDateTime(value);
+                                            labTestDataItem.InboxReceivedDate = Convert.ToDateTime(value);
                                             break;
                                         case "labtestobrid":
                                             labTestDataItem.LabTestOBRID = Convert.ToInt32(value);
@@ -2757,10 +2859,10 @@ namespace LabTestApi.Services
                                             labTestDataItem.ReferenceRanges = value?.ToString();
                                             break;
                                         case "usdescription":
-                                            labTestDataItem.MesageSubject = value.ToString();
+                                            labTestDataItem.MessageSubject = value.ToString();
                                             break;
                                         case "messagesubject":
-                                            labTestDataItem.MesageSubject = value.ToString();
+                                            labTestDataItem.MessageSubject = value.ToString();
                                             break;
                                         case "observationdatetime":
                                             labTestDataItem.ObservationDateTime = Convert.ToDateTime(value);
@@ -2778,7 +2880,7 @@ namespace LabTestApi.Services
                                             labTestDataItem.AbnormalFlagID = Convert.ToInt32(value);
                                             break;
                                         case "abnormalflagdesc":
-                                            labTestDataItem.AbnormalFlagDesc = value?.ToString();
+                                            labTestDataItem.AbnormalFlagDescription = value?.ToString();
                                             break;
                                         case "priorityid":
                                             labTestDataItem.PriorityID = Convert.ToInt32(value);
@@ -2879,6 +2981,7 @@ namespace LabTestApi.Services
                 using (var command = new SqlCommand("[dbo].[usp_GetIncompleteHighLabResults]", connection))
                 {
                     command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.CommandTimeout = 90;
                     
                     var labTestDataList = new List<LabTestData>();
                     
@@ -2899,26 +3002,29 @@ namespace LabTestApi.Services
                                     FullName = GetNullableString(reader, "FullName"),
                                     DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
                                     GenderName = GetNullableString(reader, "GenderName"),
-                                    PatientID = GetNullableString(reader, "PatientID"),
-                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    PatientID = GetNullableStringSafe(reader, "PatientID"),
+                                    PracticeID = GetNullableStringSafe(reader, "PracticeID"),
                                     MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
                                     MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
-                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
-                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
-                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
                                     StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
-                                    ResultName = GetNullableString(reader, "resultName"),
+                                    ResultName = GetNullableString(reader, "ResultName"),
                                     ObservationValue = GetNullableString(reader, "ObservationValue"),
                                     Units = GetNullableString(reader, "Units"),
                                     ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
                                     AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
-                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    AbnormalFlagDescription = GetNullableString(reader, "AbnormalFlagDescription"),
                                     Comments = GetNullableString(reader, "Comments"),
                                     PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
                                     ProviderFullName = GetNullableString(reader, "ProviderFullName"),
                                     OrgName = GetNullableString(reader, "OrgName"),
-                                    FolderName = GetNullableString(reader, "FolderName")
+                                    FolderName = GetNullableString(reader, "FolderName"),
+                                    ResultCategory = GetNullableString(reader, "ResultCategory"),
+                                    PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
                                 };
                                 
                                 labTestDataList.Add(labTestDataItem);
@@ -2955,6 +3061,7 @@ namespace LabTestApi.Services
                 using (var command = new SqlCommand("[dbo].[usp_GetIncompleteLowLabResults]", connection))
                 {
                     command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.CommandTimeout = 90;
                     
                     var labTestDataList = new List<LabTestData>();
                     
@@ -2975,13 +3082,13 @@ namespace LabTestApi.Services
                                     FullName = GetNullableString(reader, "FullName"),
                                     DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
                                     GenderName = GetNullableString(reader, "GenderName"),
-                                    PatientID = GetNullableString(reader, "PatientID"),
-                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    PatientID = GetNullableStringSafe(reader, "PatientID"),
+                                    PracticeID = GetNullableStringSafe(reader, "PracticeID"),
                                     MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
                                     MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
-                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
-                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
-                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
                                     StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
                                     ResultName = GetNullableString(reader, "resultName"),
@@ -2989,12 +3096,15 @@ namespace LabTestApi.Services
                                     Units = GetNullableString(reader, "Units"),
                                     ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
                                     AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
-                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    AbnormalFlagDescription = GetNullableString(reader, "AbnormalFlagDescription"),
                                     Comments = GetNullableString(reader, "Comments"),
                                     PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
                                     ProviderFullName = GetNullableString(reader, "ProviderFullName"),
                                     OrgName = GetNullableString(reader, "OrgName"),
-                                    FolderName = GetNullableString(reader, "FolderName")
+                                    FolderName = GetNullableString(reader, "FolderName"),
+                                    ResultCategory = GetNullableString(reader, "ResultCategory"),
+                                    PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
                                 };
                                 
                                 labTestDataList.Add(labTestDataItem);
@@ -3031,6 +3141,7 @@ namespace LabTestApi.Services
                 using (var command = new SqlCommand("[dbo].[usp_GetCompleteHighLabResults]", connection))
                 {
                     command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.CommandTimeout = 90;
                     
                     var labTestDataList = new List<LabTestData>();
                     
@@ -3051,13 +3162,13 @@ namespace LabTestApi.Services
                                     FullName = GetNullableString(reader, "FullName"),
                                     DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
                                     GenderName = GetNullableString(reader, "GenderName"),
-                                    PatientID = GetNullableString(reader, "PatientID"),
-                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    PatientID = GetNullableStringSafe(reader, "PatientID"),
+                                    PracticeID = GetNullableStringSafe(reader, "PracticeID"),
                                     MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
                                     MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
-                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
-                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
-                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
                                     StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
                                     ResultName = GetNullableString(reader, "resultName"),
@@ -3065,12 +3176,15 @@ namespace LabTestApi.Services
                                     Units = GetNullableString(reader, "Units"),
                                     ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
                                     AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
-                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    AbnormalFlagDescription = GetNullableString(reader, "AbnormalFlagDescription"),
                                     Comments = GetNullableString(reader, "Comments"),
                                     PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
                                     ProviderFullName = GetNullableString(reader, "ProviderFullName"),
                                     OrgName = GetNullableString(reader, "OrgName"),
-                                    FolderName = GetNullableString(reader, "FolderName")
+                                    FolderName = GetNullableString(reader, "FolderName"),
+                                    ResultCategory = GetNullableString(reader, "ResultCategory"),
+                                    PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
                                 };
                                 
                                 labTestDataList.Add(labTestDataItem);
@@ -3107,6 +3221,7 @@ namespace LabTestApi.Services
                 using (var command = new SqlCommand("[dbo].[usp_GetCompleteLowLabResults]", connection))
                 {
                     command.CommandType = System.Data.CommandType.StoredProcedure;
+                    command.CommandTimeout = 90;
                     
                     var labTestDataList = new List<LabTestData>();
                     
@@ -3127,13 +3242,13 @@ namespace LabTestApi.Services
                                     FullName = GetNullableString(reader, "FullName"),
                                     DOB = reader.GetDateTime(reader.GetOrdinal("DOB")),
                                     GenderName = GetNullableString(reader, "GenderName"),
-                                    PatientID = GetNullableString(reader, "PatientID"),
-                                    PracticeID = GetNullableString(reader, "PracticeID"),
+                                    PatientID = GetNullableStringSafe(reader, "PatientID"),
+                                    PracticeID = GetNullableStringSafe(reader, "PracticeID"),
                                     MshInsertedAt = reader.GetDateTime(reader.GetOrdinal("MshInsertedAt")),
                                     MarkasRead = reader.GetBoolean(reader.GetOrdinal("MarkasRead")),
-                                    ifiinboxupdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
-                                    inboxrecevieddate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
-                                    MesageSubject = GetNullableString(reader, "MessageSubject"),
+                                    IFIInboxUpdate = reader.GetDateTime(reader.GetOrdinal("IFIInboxUpdate")),
+                                    InboxReceivedDate = reader.GetDateTime(reader.GetOrdinal("InboxReceivedDate")),
+                                    MessageSubject = GetNullableString(reader, "MessageSubject"),
                                     ObservationDateTime = GetNullableDateTimeSafe(reader, "ObservationDateTime") ?? DateTime.MinValue,
                                     StatusChangeDateTime = GetNullableDateTimeSafe(reader, "StatusChangeDateTime") ?? DateTime.MinValue,
                                     ResultName = GetNullableString(reader, "resultName"),
@@ -3141,12 +3256,15 @@ namespace LabTestApi.Services
                                     Units = GetNullableString(reader, "Units"),
                                     ReferenceRanges = GetNullableString(reader, "ReferenceRanges"),
                                     AbnormalFlagID = reader.GetInt32(reader.GetOrdinal("AbnormalFlagID")),
-                                    AbnormalFlagDesc = GetNullableString(reader, "AbnormalFlagDescription"),
+                                    AbnormalFlagDescription = GetNullableString(reader, "AbnormalFlagDescription"),
                                     Comments = GetNullableString(reader, "Comments"),
                                     PriorityID = reader.GetInt32(reader.GetOrdinal("PriorityID")),
                                     ProviderFullName = GetNullableString(reader, "ProviderFullName"),
                                     OrgName = GetNullableString(reader, "OrgName"),
-                                    FolderName = GetNullableString(reader, "FolderName")
+                                    FolderName = GetNullableString(reader, "FolderName"),
+                                    ResultCategory = GetNullableString(reader, "ResultCategory"),
+                                    PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
                                 };
                                 
                                 labTestDataList.Add(labTestDataItem);

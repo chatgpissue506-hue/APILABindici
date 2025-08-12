@@ -17,12 +17,12 @@ namespace LabTestApi.Models
         public string? PracticeID { get; set; }
         public DateTime MshInsertedAt { get; set; }
         public bool MarkasRead { get; set; }
-        public DateTime ifiinboxupdate { get; set; }
-        public DateTime inboxrecevieddate { get; set; }
+        public DateTime IFIInboxUpdate { get; set; }
+        public DateTime InboxReceivedDate { get; set; }
         public int LabTestOBRID { get; set; }
         public string? SnomedCode { get; set; }
         public string? PanelType { get; set; }
-        public string? MesageSubject { get; set; }
+        public string? MessageSubject { get; set; }
         public DateTime ObservationDateTime { get; set; }
         public DateTime StatusChangeDateTime { get; set; }
         public string? AppointmentID { get; set; }
@@ -34,7 +34,7 @@ namespace LabTestApi.Models
         public string? Units { get; set; }
         public string? ReferenceRanges { get; set; }
         public int AbnormalFlagID { get; set; }
-        public string? AbnormalFlagDesc { get; set; }
+        public string? AbnormalFlagDescription { get; set; }
         public int LabTestNTEID { get; set; }
         public string? Source { get; set; }
         public string? Comments { get; set; }
@@ -43,5 +43,8 @@ namespace LabTestApi.Models
         public string? ProviderFullName { get; set; }
         public string? OrgName { get; set; }
         public string? FolderName { get; set; }
+        public DateTime? PrevDate { get; set; }
+        public string? OBResultStatus { get; set; }
+        public string? ResultCategory { get; set; }
     }
 }

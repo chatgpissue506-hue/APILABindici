@@ -23,5 +23,11 @@ namespace LabTestApi.Services
         Task<IEnumerable<LabTestData>> GetIncompleteLowLabResultsAsync();
         Task<IEnumerable<LabTestData>> GetCompleteHighLabResultsAsync();
         Task<IEnumerable<LabTestData>> GetCompleteLowLabResultsAsync();
+
+        // Referrals
+        Task<IEnumerable<ReferralTestData>> GetReferralsTestDataAsync();
+
+        // Documents
+        Task<IEnumerable<DocumentData>> GetDocumentByDocumentKeyAsync(string documentKey, int practiceID);
     }
 }
