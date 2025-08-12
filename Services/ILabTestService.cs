@@ -29,5 +29,11 @@ namespace LabTestApi.Services
 
         // Documents
         Task<IEnumerable<DocumentData>> GetDocumentByDocumentKeyAsync(string documentKey, int practiceID);
+
+        // Inbox Marked Message
+        Task<InboxMarkedMessageResponse> MarkInboxMessageAsFiledAsync(InboxMarkedMessageRequest request);
+
+        // Inbox Folder Item Update
+        Task<InboxFolderItemUpdateResponse> UpdateInboxFolderItemAsync(InboxFolderItemUpdateRequest request);
     }
 }

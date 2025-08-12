@@ -386,6 +386,76 @@ namespace LabTestApi.Controllers
         }
 
         /// <summary>
+        /// Mark inbox message as filed using uspInboxMarkedMessageFile stored procedure
+        /// </summary>
+        [HttpPost("inbox/mark-as-filed")]
+        [ProducesResponseType(typeof(InboxMarkedMessageResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<InboxMarkedMessageResponse>> MarkInboxMessageAsFiled([FromBody] InboxMarkedMessageRequest request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(new { error = "Request body is required" });
+                }
+
+                if (request.UpdatedBy <= 0)
+                {
+                    return BadRequest(new { error = "Valid UpdatedBy user ID is required" });
+                }
+
+                if (request.UserLoggingID <= 0)
+                {
+                    return BadRequest(new { error = "Valid UserLoggingID is required" });
+                }
+
+                var result = await _labTestService.MarkInboxMessageAsFiledAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while marking inbox message as filed", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Update inbox folder item using uspInboxFolderItemInsertUpdate_AI stored procedure
+        /// </summary>
+        [HttpPut("inbox/update-folder-item")]
+        [ProducesResponseType(typeof(InboxFolderItemUpdateResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult<InboxFolderItemUpdateResponse>> UpdateInboxFolderItem([FromBody] InboxFolderItemUpdateRequest request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(new { error = "Request body is required" });
+                }
+
+                if (request.InboxFolderItemID <= 0)
+                {
+                    return BadRequest(new { error = "Valid InboxFolderItemID is required" });
+                }
+
+                if (request.UserLoggingID <= 0)
+                {
+                    return BadRequest(new { error = "Valid UserLoggingID is required" });
+                }
+
+                var result = await _labTestService.UpdateInboxFolderItemAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while updating inbox folder item", details = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Get incomplete high priority lab results
         /// </summary>
         /// <returns>List of incomplete high priority lab results</returns>

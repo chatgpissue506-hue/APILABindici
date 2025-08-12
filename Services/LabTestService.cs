@@ -3288,5 +3288,149 @@ namespace LabTestApi.Services
             return new List<LabTestData>();
         }
     }
+
+    public async Task<InboxMarkedMessageResponse> MarkInboxMessageAsFiledAsync(InboxMarkedMessageRequest request)
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Marking inbox message as filed for InboxFolderItemID: {request.InboxFolderItemID}");
+
+                using var command = new SqlCommand("[Prompt].[uspInboxMarkedMessageFile]", connection)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure,
+                    CommandTimeout = 90
+                };
+
+                // Add parameters
+                command.Parameters.AddWithValue("@pInboxFolderItemID", (object?)request.InboxFolderItemID ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pUpdatedBy", request.UpdatedBy);
+                command.Parameters.AddWithValue("@pPracticeID", (object?)request.PracticeID ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pPatientID", request.PatientID);
+                command.Parameters.AddWithValue("@pUserLoggingID", request.UserLoggingID);
+                command.Parameters.AddWithValue("@pPracticeLocationID", (object?)request.PracticeLocationID ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pGlobalAccessIdentifier", (object?)request.GlobalAccessIdentifier ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pIsNormalFile", request.IsNormalFile);
+
+                // Add output parameters
+                var outputParam = new SqlParameter("@pOutputParam", System.Data.SqlDbType.Int)
+                {
+                    Direction = System.Data.ParameterDirection.Output
+                };
+                command.Parameters.Add(outputParam);
+
+                var outputParamCount = new SqlParameter("@pOutputParamCount", System.Data.SqlDbType.Int)
+                {
+                    Direction = System.Data.ParameterDirection.Output
+                };
+                command.Parameters.Add(outputParamCount);
+
+                // Execute the stored procedure
+                await command.ExecuteNonQueryAsync();
+
+                // Get output parameter values
+                var outputParamValue = outputParam.Value != DBNull.Value ? Convert.ToInt32(outputParam.Value) : -1;
+                var outputParamCountValue = outputParamCount.Value != DBNull.Value ? Convert.ToInt32(outputParamCount.Value) : 0;
+
+                // Get the result set for IsShowOnPortal and IsConfidential
+                var response = new InboxMarkedMessageResponse
+                {
+                    OutputParam = outputParamValue,
+                    OutputParamCount = outputParamCountValue,
+                    IsShowOnPortal = false,
+                    IsConfidential = false
+                };
+
+                // Try to get the result set if available
+                try
+                {
+                    using var reader = await command.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        response.IsShowOnPortal = reader.GetBoolean(reader.GetOrdinal("IsShowOnPortal"));
+                        response.IsConfidential = reader.GetBoolean(reader.GetOrdinal("IsConfidential"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Could not read result set: {ex.Message}");
+                    // This is expected as the SP might not always return a result set
+                }
+
+                Console.WriteLine($"✅ Successfully marked inbox message as filed. OutputParam: {outputParamValue}, OutputParamCount: {outputParamCountValue}");
+                return response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error marking inbox message as filed: {ex.Message}");
+            return new InboxMarkedMessageResponse
+            {
+                OutputParam = -1,
+                OutputParamCount = 0,
+                IsShowOnPortal = false,
+                IsConfidential = false
+            };
+        }
+    }
+
+    public async Task<InboxFolderItemUpdateResponse> UpdateInboxFolderItemAsync(InboxFolderItemUpdateRequest request)
+    {
+        try
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                await connection.OpenAsync();
+                Console.WriteLine($"🔍 Updating inbox folder item for InboxFolderItemID: {request.InboxFolderItemID}");
+
+                using var command = new SqlCommand("[Prompt].[uspInboxFolderItemInsertUpdate_AI]", connection)
+                {
+                    CommandType = System.Data.CommandType.StoredProcedure,
+                    CommandTimeout = 90
+                };
+
+                // Add input parameters
+                command.Parameters.AddWithValue("@pInboxFolderItemID", request.InboxFolderItemID);
+                command.Parameters.AddWithValue("@pComments", (object?)request.Comments ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pMarkedAsRead", (object?)request.MarkedAsRead ?? DBNull.Value);
+                command.Parameters.AddWithValue("@pUserLoggingID", request.UserLoggingID);
+
+                // Add output parameter
+                var outputInboxFolderItemID = new SqlParameter("@pOutputInboxFolderItemID", System.Data.SqlDbType.BigInt)
+                {
+                    Direction = System.Data.ParameterDirection.Output
+                };
+                command.Parameters.Add(outputInboxFolderItemID);
+
+                // Execute the stored procedure
+                var rowsAffected = await command.ExecuteNonQueryAsync();
+
+                // Get output parameter value
+                var outputInboxFolderItemIDValue = outputInboxFolderItemID.Value != DBNull.Value ? Convert.ToInt64(outputInboxFolderItemID.Value) : 0;
+
+                var response = new InboxFolderItemUpdateResponse
+                {
+                    OutputInboxFolderItemID = outputInboxFolderItemIDValue,
+                    Success = rowsAffected > 0,
+                    Message = rowsAffected > 0 ? "Inbox folder item updated successfully" : "No rows were affected"
+                };
+
+                Console.WriteLine($"✅ Successfully updated inbox folder item. Rows affected: {rowsAffected}, OutputInboxFolderItemID: {outputInboxFolderItemIDValue}");
+                return response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error updating inbox folder item: {ex.Message}");
+            return new InboxFolderItemUpdateResponse
+            {
+                OutputInboxFolderItemID = 0,
+                Success = false,
+                Message = $"Error updating inbox folder item: {ex.Message}"
+            };
+        }
+    }
 }
 }
