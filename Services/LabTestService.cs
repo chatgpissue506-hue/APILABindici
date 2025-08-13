@@ -3371,10 +3371,30 @@ namespace LabTestApi.Services
                     
                     using (var reader = await command.ExecuteReaderAsync())
                     {
+                        Console.WriteLine($"📋 Columns returned: {reader.FieldCount}");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
                         while (await reader.ReadAsync())
                         {
                             try
                             {
+                                var hasUpper = HasColumn(reader, "InboxFolderItemID");
+                                var hasLower = HasColumn(reader, "inboxfolderitemid");
+                                if (!hasUpper && !hasLower)
+                                {
+                                    Console.WriteLine("⚠️ InboxFolderItemID column not present in result set (neither 'InboxFolderItemID' nor 'inboxfolderitemid')");
+                                }
+                                else
+                                {
+                                    var upperType = GetColumnTypeName(reader, "InboxFolderItemID") ?? "n/a";
+                                    var lowerType = GetColumnTypeName(reader, "inboxfolderitemid") ?? "n/a";
+                                    var rawUpper = GetRawValueSafe(reader, "InboxFolderItemID");
+                                    var rawLower = GetRawValueSafe(reader, "inboxfolderitemid");
+                                    Console.WriteLine($"🔎 InboxFolderItemID presence → Upper: {hasUpper} ({upperType}), Lower: {hasLower} ({lowerType})");
+                                    Console.WriteLine($"🧪 Raw values → Upper: {(rawUpper ?? "NULL")}, Lower: {(rawLower ?? "NULL")}");
+                                }
                                 var labTestDataItem = new LabTestData
                                 {
                                     LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
@@ -3408,8 +3428,10 @@ namespace LabTestApi.Services
                                     FolderName = GetNullableString(reader, "FolderName"),
                                     ResultCategory = GetNullableString(reader, "ResultCategory"),
                                     PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
-                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus"),
+                                    InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                                 };
+                                Console.WriteLine($"➡️ Mapped InboxFolderItemID: {(labTestDataItem.InboxFolderItemID?.ToString() ?? "NULL")}");
                                 
                                 labTestDataList.Add(labTestDataItem);
                             }
