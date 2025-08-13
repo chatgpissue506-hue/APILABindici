@@ -2482,10 +2482,31 @@ namespace LabTestApi.Services
                 command.Parameters.AddWithValue("@pDocumentKey", documentKey);
                 command.Parameters.AddWithValue("@pPracticeID", practiceID);
 
-                var results = new List<DocumentData>();
-                using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                    var results = new List<DocumentData>();
+                    using var reader = await command.ExecuteReaderAsync();
+                    Console.WriteLine($"📋 Columns returned: {reader.FieldCount}");
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                    }
+                    while (await reader.ReadAsync())
                 {
+                        var hasUpper = HasColumn(reader, "InboxFolderItemID");
+                        var hasLower = HasColumn(reader, "inboxfolderitemid");
+                        if (!hasUpper && !hasLower)
+                        {
+                            Console.WriteLine("⚠️ InboxFolderItemID column not present in result set (neither 'InboxFolderItemID' nor 'inboxfolderitemid')");
+                        }
+                        else
+                        {
+                            var upperType = GetColumnTypeName(reader, "InboxFolderItemID") ?? "n/a";
+                            var lowerType = GetColumnTypeName(reader, "inboxfolderitemid") ?? "n/a";
+                            var rawUpper = GetRawValueSafe(reader, "InboxFolderItemID");
+                            var rawLower = GetRawValueSafe(reader, "inboxfolderitemid");
+                            Console.WriteLine($"🔎 InboxFolderItemID presence → Upper: {hasUpper} ({upperType}), Lower: {hasLower} ({lowerType})");
+                            Console.WriteLine($"🧪 Raw values → Upper: {(rawUpper ?? "NULL")}, Lower: {(rawLower ?? "NULL")}");
+                        }
+
                     var item = new DocumentData
                     {
                         DocumentID = reader.GetInt32(reader.GetOrdinal("DocumentID")),
@@ -2497,6 +2518,7 @@ namespace LabTestApi.Services
                         DocumentBytes = reader.IsDBNull(reader.GetOrdinal("DocumentData")) ? null : (byte[])reader["DocumentData"],
                         InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                     };
+                        Console.WriteLine($"➡️ Mapped InboxFolderItemID: {(item.InboxFolderItemID?.ToString() ?? "NULL")}");
                     results.Add(item);
                 }
 
@@ -2982,6 +3004,48 @@ namespace LabTestApi.Services
         return null;
     }
 
+    // Helper to check if a column exists in the current reader
+    private bool HasColumn(SqlDataReader reader, string columnName)
+    {
+        try
+        {
+            reader.GetOrdinal(columnName);
+            return true;
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return false;
+        }
+    }
+
+    // Helper to get a column's SQL data type name if it exists
+    private string? GetColumnTypeName(SqlDataReader reader, string columnName)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.GetDataTypeName(ordinal);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    // Helper to safely get raw value by column name if present
+    private object? GetRawValueSafe(SqlDataReader reader, string columnName)
+    {
+        try
+        {
+            var ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? null : reader.GetValue(ordinal);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     // Priority-based lab results methods
     public async Task<IEnumerable<LabTestData>> GetIncompleteHighLabResultsAsync()
     {
@@ -3001,10 +3065,30 @@ namespace LabTestApi.Services
                     
                     using (var reader = await command.ExecuteReaderAsync())
                     {
+                        Console.WriteLine($"📋 Columns returned: {reader.FieldCount}");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
                         while (await reader.ReadAsync())
                         {
                             try
                             {
+                                var hasUpper = HasColumn(reader, "InboxFolderItemID");
+                                var hasLower = HasColumn(reader, "inboxfolderitemid");
+                                if (!hasUpper && !hasLower)
+                                {
+                                    Console.WriteLine("⚠️ InboxFolderItemID column not present in result set (neither 'InboxFolderItemID' nor 'inboxfolderitemid')");
+                                }
+                                else
+                                {
+                                    var upperType = GetColumnTypeName(reader, "InboxFolderItemID") ?? "n/a";
+                                    var lowerType = GetColumnTypeName(reader, "inboxfolderitemid") ?? "n/a";
+                                    var rawUpper = GetRawValueSafe(reader, "InboxFolderItemID");
+                                    var rawLower = GetRawValueSafe(reader, "inboxfolderitemid");
+                                    Console.WriteLine($"🔎 InboxFolderItemID presence → Upper: {hasUpper} ({upperType}), Lower: {hasLower} ({lowerType})");
+                                    Console.WriteLine($"🧪 Raw values → Upper: {(rawUpper ?? "NULL")}, Lower: {(rawLower ?? "NULL")}");
+                                }
                                 var labTestDataItem = new LabTestData
                                 {
                                     LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
@@ -3038,8 +3122,10 @@ namespace LabTestApi.Services
                                     FolderName = GetNullableString(reader, "FolderName"),
                                     ResultCategory = GetNullableString(reader, "ResultCategory"),
                                     PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
-                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus"),
+                                    InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                                 };
+                                Console.WriteLine($"➡️ Mapped InboxFolderItemID: {(labTestDataItem.InboxFolderItemID?.ToString() ?? "NULL")}");
                                 
                                 labTestDataList.Add(labTestDataItem);
                             }
@@ -3081,10 +3167,30 @@ namespace LabTestApi.Services
                     
                     using (var reader = await command.ExecuteReaderAsync())
                     {
+                        Console.WriteLine($"📋 Columns returned: {reader.FieldCount}");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
                         while (await reader.ReadAsync())
                         {
                             try
                             {
+                                var hasUpper = HasColumn(reader, "InboxFolderItemID");
+                                var hasLower = HasColumn(reader, "inboxfolderitemid");
+                                if (!hasUpper && !hasLower)
+                                {
+                                    Console.WriteLine("⚠️ InboxFolderItemID column not present in result set (neither 'InboxFolderItemID' nor 'inboxfolderitemid')");
+                                }
+                                else
+                                {
+                                    var upperType = GetColumnTypeName(reader, "InboxFolderItemID") ?? "n/a";
+                                    var lowerType = GetColumnTypeName(reader, "inboxfolderitemid") ?? "n/a";
+                                    var rawUpper = GetRawValueSafe(reader, "InboxFolderItemID");
+                                    var rawLower = GetRawValueSafe(reader, "inboxfolderitemid");
+                                    Console.WriteLine($"🔎 InboxFolderItemID presence → Upper: {hasUpper} ({upperType}), Lower: {hasLower} ({lowerType})");
+                                    Console.WriteLine($"🧪 Raw values → Upper: {(rawUpper ?? "NULL")}, Lower: {(rawLower ?? "NULL")}");
+                                }
                                 var labTestDataItem = new LabTestData
                                 {
                                     LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
@@ -3118,8 +3224,10 @@ namespace LabTestApi.Services
                                     FolderName = GetNullableString(reader, "FolderName"),
                                     ResultCategory = GetNullableString(reader, "ResultCategory"),
                                     PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
-                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus"),
+                                    InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                                 };
+                                Console.WriteLine($"➡️ Mapped InboxFolderItemID: {(labTestDataItem.InboxFolderItemID?.ToString() ?? "NULL")}");
                                 
                                 labTestDataList.Add(labTestDataItem);
                             }
@@ -3161,10 +3269,30 @@ namespace LabTestApi.Services
                     
                     using (var reader = await command.ExecuteReaderAsync())
                     {
+                        Console.WriteLine($"📋 Columns returned: {reader.FieldCount}");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            Console.WriteLine($"  Column {i}: {reader.GetName(i)} ({reader.GetDataTypeName(i)})");
+                        }
                         while (await reader.ReadAsync())
                         {
                             try
                             {
+                                var hasUpper = HasColumn(reader, "InboxFolderItemID");
+                                var hasLower = HasColumn(reader, "inboxfolderitemid");
+                                if (!hasUpper && !hasLower)
+                                {
+                                    Console.WriteLine("⚠️ InboxFolderItemID column not present in result set (neither 'InboxFolderItemID' nor 'inboxfolderitemid')");
+                                }
+                                else
+                                {
+                                    var upperType = GetColumnTypeName(reader, "InboxFolderItemID") ?? "n/a";
+                                    var lowerType = GetColumnTypeName(reader, "inboxfolderitemid") ?? "n/a";
+                                    var rawUpper = GetRawValueSafe(reader, "InboxFolderItemID");
+                                    var rawLower = GetRawValueSafe(reader, "inboxfolderitemid");
+                                    Console.WriteLine($"🔎 InboxFolderItemID presence → Upper: {hasUpper} ({upperType}), Lower: {hasLower} ({lowerType})");
+                                    Console.WriteLine($"🧪 Raw values → Upper: {(rawUpper ?? "NULL")}, Lower: {(rawLower ?? "NULL")}");
+                                }
                                 var labTestDataItem = new LabTestData
                                 {
                                     LabTestMshID = reader.GetInt32(reader.GetOrdinal("LabTestMshID")),
@@ -3198,8 +3326,10 @@ namespace LabTestApi.Services
                                     FolderName = GetNullableString(reader, "FolderName"),
                                     ResultCategory = GetNullableString(reader, "ResultCategory"),
                                     PrevDate = GetNullableDateTimeSafe(reader, "PrevDate"),
-                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus")
+                                    OBResultStatus = GetNullableStringSafe(reader, "OBResultStatus"),
+                                    InboxFolderItemID = GetFirstAvailableInt32(reader, "InboxFolderItemID", "inboxfolderitemid")
                                 };
+                                Console.WriteLine($"➡️ Mapped InboxFolderItemID: {(labTestDataItem.InboxFolderItemID?.ToString() ?? "NULL")}");
                                 
                                 labTestDataList.Add(labTestDataItem);
                             }

@@ -522,6 +522,11 @@ namespace LabTestApi.Controllers
             try
             {
                 var result = await _labTestService.GetIncompleteHighLabResultsAsync();
+                var total = result.Count();
+                var withInboxId = result.Count(r => r.InboxFolderItemID.HasValue);
+                var withoutInboxId = total - withInboxId;
+                Console.WriteLine($"📦 incomplete-high: total={total}, withInboxId={withInboxId}, withoutInboxId={withoutInboxId}");
+                Console.WriteLine($"🔎 incomplete-high sample InboxFolderItemID: {string.Join(", ", result.Take(5).Select(r => r.InboxFolderItemID?.ToString() ?? "NULL"))}");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -542,6 +547,11 @@ namespace LabTestApi.Controllers
             try
             {
                 var result = await _labTestService.GetIncompleteLowLabResultsAsync();
+                var total = result.Count();
+                var withInboxId = result.Count(r => r.InboxFolderItemID.HasValue);
+                var withoutInboxId = total - withInboxId;
+                Console.WriteLine($"📦 incomplete-low: total={total}, withInboxId={withInboxId}, withoutInboxId={withoutInboxId}");
+                Console.WriteLine($"🔎 incomplete-low sample InboxFolderItemID: {string.Join(", ", result.Take(5).Select(r => r.InboxFolderItemID?.ToString() ?? "NULL"))}");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -562,6 +572,11 @@ namespace LabTestApi.Controllers
             try
             {
                 var result = await _labTestService.GetCompleteHighLabResultsAsync();
+                var total = result.Count();
+                var withInboxId = result.Count(r => r.InboxFolderItemID.HasValue);
+                var withoutInboxId = total - withInboxId;
+                Console.WriteLine($"📦 complete-high: total={total}, withInboxId={withInboxId}, withoutInboxId={withoutInboxId}");
+                Console.WriteLine($"🔎 complete-high sample InboxFolderItemID: {string.Join(", ", result.Take(5).Select(r => r.InboxFolderItemID?.ToString() ?? "NULL"))}");
                 return Ok(result);
             }
             catch (Exception ex)
@@ -582,6 +597,11 @@ namespace LabTestApi.Controllers
             try
             {
                 var result = await _labTestService.GetCompleteLowLabResultsAsync();
+                var total = result.Count();
+                var withInboxId = result.Count(r => r.InboxFolderItemID.HasValue);
+                var withoutInboxId = total - withInboxId;
+                Console.WriteLine($"📦 complete-low: total={total}, withInboxId={withInboxId}, withoutInboxId={withoutInboxId}");
+                Console.WriteLine($"🔎 complete-low sample InboxFolderItemID: {string.Join(", ", result.Take(5).Select(r => r.InboxFolderItemID?.ToString() ?? "NULL"))}");
                 return Ok(result);
             }
             catch (Exception ex)
